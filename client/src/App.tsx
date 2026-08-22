@@ -19,6 +19,7 @@ const AttendancePage = lazy(() => import('./pages/employee/AttendancePage'));
 const LeavePage = lazy(() => import('./pages/employee/LeavePage'));
 const PayrollPage = lazy(() => import('./pages/employee/PayrollPage'));
 const NotificationsPage = lazy(() => import('./pages/employee/NotificationsPage'));
+const SettingsPage = lazy(() => import('./pages/employee/SettingsPage'));
 
 // Admin / HR Pages — lazy loaded
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -28,6 +29,8 @@ const LeaveAdmin = lazy(() => import('./pages/admin/LeaveAdmin'));
 const PayrollAdmin = lazy(() => import('./pages/admin/PayrollAdmin'));
 const AnalyticsAdmin = lazy(() => import('./pages/admin/AnalyticsAdmin'));
 const NotificationsAdmin = lazy(() => import('./pages/admin/NotificationsAdmin'));
+const PerformanceAdmin = lazy(() => import('./pages/admin/PerformanceAdmin'));
+const SettingsAdmin = lazy(() => import('./pages/admin/SettingsAdmin'));
 
 function App() {
   const { user, isAuthenticated } = useAuthStore();
@@ -64,6 +67,7 @@ function App() {
           <Route path="/employee/leave" element={<LeavePage />} />
           <Route path="/employee/payroll" element={<PayrollPage />} />
           <Route path="/employee/notifications" element={<NotificationsPage />} />
+          <Route path="/employee/settings" element={<SettingsPage />} />
 
           {/* HR / Admin Routes */}
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -74,6 +78,8 @@ function App() {
           <Route path="/admin/payroll" element={<PayrollAdmin />} />
           <Route path="/admin/analytics" element={<AnalyticsAdmin />} />
           <Route path="/admin/notifications" element={<NotificationsAdmin />} />
+          <Route path="/admin/performance" element={<PerformanceAdmin />} />
+          <Route path="/admin/settings" element={<SettingsAdmin />} />
         </Route>
 
         {/* Default Catch-All Route */}
