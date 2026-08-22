@@ -11,6 +11,7 @@ import attendanceRoutes from './routes/attendance';
 import leaveRoutes from './routes/leave';
 import payrollRoutes from './routes/payroll';
 import notificationRoutes from './routes/notifications';
+import documentRoutes from './routes/documents';
 
 dotenv.config();
 
@@ -42,6 +43,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/leave', leaveRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/documents', documentRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

@@ -45,6 +45,15 @@ enum NotificationType {
   SYSTEM_ALERT
 }
 
+enum DocumentType {
+  CONTRACT
+  ID_PROOF
+  EDUCATION
+  EXPERIENCE
+  PAYSLIP
+  OTHER
+}
+
 // User authentication and authorization
 model User {
   id                String    @id @default(cuid())
@@ -234,19 +243,22 @@ model SalarySlip {
 
 // Document management
 model Document {
-  id                String    @id @default(cuid())
+  id                String         @id @default(cuid())
   employeeId        String
-  title             String
-  description       String?
-  fileUrl           String
-  fileType          String
+  documentType      DocumentType
+  fileName          String
+  filePath          String
   fileSize          Int
-  uploadedAt        DateTime  @default(now())
+  mimeType          String?
+  description       String?
+  uploadedBy        String
+  uploadedAt        DateTime       @default(now())
 
   // Relations
-  employee          Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee          Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
+  @@index([documentType])
 }
 
 // Notifications system
