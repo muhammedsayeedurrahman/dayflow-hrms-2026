@@ -48,6 +48,10 @@ export const employeeAPI = {
   updateProfile: (data: any) => api.put('/employees/profile', data),
   getAllEmployees: () => api.get('/employees'),
   getEmployeeById: (id: string) => api.get(`/employees/${id}`),
+  getEmployeeAttendance: (id: string, startDate?: string, endDate?: string) =>
+    api.get(`/employees/${id}/attendance`, { params: { startDate, endDate } }),
+  updateEmployee: (id: string, data: any) => api.put(`/employees/${id}`, data),
+  getStats: () => api.get('/employees/stats'),
 };
 
 // Attendance API
@@ -57,17 +61,21 @@ export const attendanceAPI = {
   getTodayStatus: () => api.get('/attendance/today'),
   getMyAttendance: (startDate?: string, endDate?: string) =>
     api.get('/attendance/me', { params: { startDate, endDate } }),
-  getAllAttendance: (employeeId?: string) =>
-    api.get('/attendance', { params: { employeeId } }),
+  getAllAttendance: (employeeId?: string, startDate?: string, endDate?: string) =>
+    api.get('/attendance', { params: { employeeId, startDate, endDate } }),
+  getStats: (startDate?: string, endDate?: string) =>
+    api.get('/attendance/stats', { params: { startDate, endDate } }),
 };
 
 // Leave API
 export const leaveAPI = {
   applyLeave: (data: any) => api.post('/leave/apply', data),
   getMyLeaves: () => api.get('/leave/me'),
-  getAllLeaves: () => api.get('/leave'),
+  getAllLeaves: (status?: string, employeeId?: string) =>
+    api.get('/leave', { params: { status, employeeId } }),
   updateLeaveStatus: (id: string, status: string, comments?: string) =>
     api.put(`/leave/${id}/status`, { status, comments }),
+  getStats: () => api.get('/leave/stats'),
 };
 
 // Payroll API
@@ -78,6 +86,7 @@ export const payrollAPI = {
     api.put(`/payroll/${employeeId}`, data),
   getSalarySlip: (month: number, year: number) =>
     api.get('/payroll/salary-slip', { params: { month, year } }),
+  getStats: () => api.get('/payroll/stats'),
 };
 
 // Notification API
@@ -85,4 +94,19 @@ export const notificationAPI = {
   getMyNotifications: () => api.get('/notifications/me'),
   markAsRead: (id: string) => api.put(`/notifications/${id}/read`),
   markAllAsRead: () => api.put('/notifications/read-all'),
+};
+
+// Document API
+export const documentAPI = {
+  upload: (formData: FormData) =>
+    api.post('/documents/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  getEmployeeDocuments: (employeeId: string) =>
+    api.get(`/documents/employee/${employeeId}`),
+  getAllDocuments: (documentType?: string, employeeId?: string) =>
+    api.get('/documents', { params: { documentType, employeeId } }),
+  download: (id: string) =>
+    api.get(`/documents/${id}/download`, { responseType: 'blob' }),
+  delete: (id: string) => api.delete(`/documents/${id}`),
 };

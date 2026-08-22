@@ -84,7 +84,10 @@ Traditional HR processes are fragmented, manual, and time-consuming. Dayflow dig
 - **Automatic Calculations** - Work hours, gross/net salary
 - **Activity Logging** - Complete audit trail for compliance
 - **Responsive Design** - Works on desktop, tablet, mobile
-- **Mock + Real Data** - Frontend works with mock data OR real backend API
+- **Dual Mode Architecture** - Frontend works with mock data (demo) OR real backend API (production)
+- **Email Notifications** - Automated emails for leave approvals/rejections (SMTP ready)
+- **Document Management** - Upload, view, download employee documents
+- **PostgreSQL Ready** - Migration guide included for production deployment
 
 ---
 
