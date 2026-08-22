@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../utils/prisma';
 import { HttpError } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
+import { getInclusiveDateRange } from '../utils/dateRange';
 
 // Get current user's profile
 export const getMyProfile = async (
@@ -261,6 +262,61 @@ export const getEmployeeStats = async (
         byDepartment,
         byDesignation,
       },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get attendance for specific employee
+export const getEmployeeAttendance = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const employeeId = req.params.id as string;
+    const userId = req.user?.id;
+    const { startDate, endDate } = req.query;
+
+    // Check if user is authorized to view this employee's attendance
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { employee: true },
+    });
+
+    if (!user) {
+      throw new HttpError(404, 'User not found');
+    }
+
+    // Employees can only view their own attendance
+    // HR/Admin can view any employee's attendance
+    if (user.role === 'EMPLOYEE' && user.employee?.id !== employeeId) {
+      throw new HttpError(403, 'You can only view your own attendance');
+    }
+
+    // Verify employee exists
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!employee) {
+      throw new HttpError(404, 'Employee not found');
+    }
+
+    const { start, end } = getInclusiveDateRange(startDate, endDate);
+    const where: any = { employeeId };
+    if (start || end) where.date = { ...(start && { gte: start }), ...(end && { lte: end }) };
+
+    const attendance = await prisma.attendance.findMany({
+      where,
+      orderBy: { date: 'desc' },
+      take: 100,
+    });
+
+    res.json({
+      success: true,
+      data: attendance,
     });
   } catch (error) {
     next(error);

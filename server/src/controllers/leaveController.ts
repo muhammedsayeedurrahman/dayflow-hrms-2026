@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../utils/prisma';
 import { HttpError } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
+import emailService from '../utils/emailService';
 
 const applyLeaveSchema = z.object({
   leaveType: z.enum(['PAID', 'SICK', 'UNPAID']),
@@ -47,7 +48,7 @@ export const applyLeave = async (
 
     const hrUsers = await prisma.user.findMany({
       where: { role: { in: ['HR', 'ADMIN'] } },
-      select: { id: true },
+      select: { id: true, email: true },
     });
 
     // The request and every recipient notification are one business action.
@@ -82,6 +83,20 @@ export const applyLeave = async (
 
       return created;
     });
+
+    // Send email notifications to HR (async, don't wait)
+    if (hrUsers.length > 0) {
+      hrUsers.forEach((hrUser) => {
+        emailService.sendLeaveRequestNotificationToHR(
+          hrUser.email,
+          employee.fullName,
+          validatedData.leaveType,
+          startDate.toLocaleDateString(),
+          endDate.toLocaleDateString(),
+          validatedData.reason || 'No reason provided'
+        ).catch((error) => console.error('Failed to send email to HR:', error));
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -208,6 +223,11 @@ export const updateLeaveStatus = async (
       throw new HttpError(400, 'Leave request has already been processed');
     }
 
+    const approverUser = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { employee: true },
+    });
+
     const updated = await prisma.$transaction(async (tx) => {
       const processed = await tx.leaveRequest.update({
         where: { id },
@@ -236,6 +256,32 @@ export const updateLeaveStatus = async (
 
       return processed;
     });
+
+    // Send email notification to employee (async, don't wait)
+    if (leaveRequest.employee.user) {
+      const approverName = approverUser?.employee?.fullName || 'HR Admin';
+
+      if (validatedData.status === 'APPROVED') {
+        emailService.sendLeaveApprovalEmail(
+          leaveRequest.employee.user.email,
+          leaveRequest.employee.fullName,
+          leaveRequest.leaveType,
+          leaveRequest.startDate.toLocaleDateString(),
+          leaveRequest.endDate.toLocaleDateString(),
+          approverName
+        ).catch((error) => console.error('Failed to send approval email:', error));
+      } else {
+        emailService.sendLeaveRejectionEmail(
+          leaveRequest.employee.user.email,
+          leaveRequest.employee.fullName,
+          leaveRequest.leaveType,
+          leaveRequest.startDate.toLocaleDateString(),
+          leaveRequest.endDate.toLocaleDateString(),
+          approverName,
+          validatedData.comments
+        ).catch((error) => console.error('Failed to send rejection email:', error));
+      }
+    }
 
     res.json({
       success: true,
