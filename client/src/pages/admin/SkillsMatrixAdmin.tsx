@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/Badge';
 import { AdminPageLayout, StatsCard, LoadingState, EmptyState } from '../../components/shared';
 import { toast } from '../../store/toastStore';
 
-const SkillsMatrixAdmin: React.FC = () => {
+export const SkillsMatrixAdmin: React.FC = () => {
   const [skills, setSkills] = useState<any[]>([]);
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -105,21 +105,12 @@ const SkillsMatrixAdmin: React.FC = () => {
         )}
 
         {/* Skills Catalog */}
-        <div
-          className="bg-white rounded-lg p-6 space-y-4 transition-all duration-200"
-          style={{
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            fontFamily: '"Fira Sans", sans-serif'
-          }}
-        >
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/60 space-y-4">
           <div>
-            <h2
-              className="text-base font-bold text-slate-900"
-              style={{ fontFamily: '"Fira Code", monospace' }}
-            >
+            <h2 className="text-base font-extrabold text-slate-900">
               Skills Catalog
             </h2>
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="text-xs text-slate-500 mt-0.5 font-semibold">
               Browse and manage all organizational competencies
             </p>
           </div>
@@ -139,36 +130,24 @@ const SkillsMatrixAdmin: React.FC = () => {
               {skills.map((skill) => (
                 <div
                   key={skill.id}
-                  className="border border-slate-200 rounded-lg p-4 transition-all duration-200 cursor-pointer hover:border-blue-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-800"
-                  style={{
-                    fontFamily: '"Fira Sans", sans-serif'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                  }}
+                  className="bg-white border border-slate-200/60 rounded-2xl p-5 interactive-card cursor-pointer"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3
-                      className="font-semibold text-slate-900"
-                      style={{ fontFamily: '"Fira Code", monospace' }}
-                    >
+                    <h3 className="text-xs font-bold text-slate-900">
                       {skill.name}
                     </h3>
-                    <Badge variant="blue">{skill.category}</Badge>
+                    <Badge variant="indigo">{skill.category}</Badge>
                   </div>
                   {skill.description && (
-                    <p className="text-sm text-slate-600 mb-3 leading-relaxed">
+                    <p className="text-[11px] text-slate-500 font-semibold mb-3 leading-relaxed">
                       {skill.description}
                     </p>
                   )}
                   {skill.department && (
                     <div className="flex items-center gap-2 pt-2 border-t border-slate-100">
                       <TrendingUp className="h-3 w-3 text-slate-400" />
-                      <p className="text-xs text-slate-500 font-medium">
-                        Department: <span className="font-semibold text-slate-700">{skill.department}</span>
+                      <p className="text-[10px] text-slate-400 font-bold">
+                        Department: <span className="text-slate-700">{skill.department}</span>
                       </p>
                     </div>
                   )}

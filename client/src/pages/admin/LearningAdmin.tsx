@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/Badge';
 import { AdminPageLayout, StatsCard, LoadingState, EmptyState } from '../../components/shared';
 import { toast } from '../../store/toastStore';
 
-const LearningAdmin: React.FC = () => {
+export const LearningAdmin: React.FC = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -112,23 +112,15 @@ const LearningAdmin: React.FC = () => {
         </div>
 
         {/* Course Catalog Section */}
-        <div
-          className="bg-white rounded-lg transition-all duration-200"
-          style={{
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            fontFamily: '"Fira Sans", sans-serif'
-          }}
-        >
-          <div className="p-6 border-b border-gray-200">
-            <h2
-              className="text-lg font-semibold text-gray-900"
-              style={{ fontFamily: '"Fira Code", monospace' }}
-            >
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/60 space-y-4">
+          <div className="pb-4 border-b border-slate-100">
+            <h2 className="text-base font-extrabold text-slate-900">
               Course Catalog
             </h2>
-            <p className="text-xs text-gray-500 mt-1">Browse and manage all training courses</p>
+            <p className="text-xs text-slate-500 mt-0.5 font-semibold">Browse and manage all training courses</p>
           </div>
-          <div className="p-6">
+          
+          <div>
             {courses.length === 0 ? (
               <EmptyState
                 icon={BookOpen}
@@ -144,21 +136,10 @@ const LearningAdmin: React.FC = () => {
                 {courses.map((course) => (
                   <div
                     key={course.id}
-                    className="border border-gray-200 rounded-lg p-4 transition-all duration-200 cursor-pointer hover:border-blue-800 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-blue-800"
-                    style={{ fontFamily: '"Fira Sans", sans-serif' }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.boxShadow = '0 10px 15px rgba(0,0,0,0.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                    tabIndex={0}
+                    className="bg-white border border-slate-200/60 rounded-2xl p-5 interactive-card cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-2">
-                      <h3
-                        className="font-semibold text-gray-900 flex-1"
-                        style={{ fontFamily: '"Fira Code", monospace' }}
-                      >
+                      <h3 className="text-xs font-bold text-slate-900 flex-1">
                         {course.title}
                       </h3>
                       <Badge variant={course.isActive ? 'success' : 'neutral'}>
@@ -166,29 +147,17 @@ const LearningAdmin: React.FC = () => {
                       </Badge>
                     </div>
                     {course.description && (
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-2">{course.description}</p>
+                      <p className="text-[11px] text-slate-500 font-semibold mb-3 leading-relaxed line-clamp-2">{course.description}</p>
                     )}
-                    <div className="space-y-2 text-xs text-gray-500 font-medium">
+                    <div className="space-y-2 text-[10px] text-slate-400 font-bold border-t border-slate-100 pt-3">
                       <p className="flex items-center gap-1.5">
-                        <Users className="w-3.5 h-3.5" style={{ color: '#1E40AF' }} />
+                        <Users className="w-3.5 h-3.5 text-blue-600" />
                         <span>{course.enrollmentCount || 0} enrolled</span>
                       </p>
                       {course.durationHours && (
                         <p className="flex items-center gap-1.5">
-                          <Clock className="w-3.5 h-3.5" style={{ color: '#1E40AF' }} />
+                          <Clock className="w-3.5 h-3.5 text-blue-600" />
                           <span>{course.durationHours} hours</span>
-                        </p>
-                      )}
-                      {course.instructor && (
-                        <p className="flex items-center gap-1.5">
-                          <span className="font-semibold text-gray-700">Instructor:</span>
-                          <span>{course.instructor}</span>
-                        </p>
-                      )}
-                      {course.completionRate !== undefined && (
-                        <p className="flex items-center gap-1.5">
-                          <TrendingUp className="w-3.5 h-3.5" style={{ color: '#F59E0B' }} />
-                          <span>{course.completionRate}% completion</span>
                         </p>
                       )}
                     </div>

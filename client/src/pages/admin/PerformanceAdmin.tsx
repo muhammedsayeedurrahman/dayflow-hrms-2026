@@ -261,7 +261,6 @@ export const PerformanceAdmin: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 pr-4 py-2.5 w-full bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent transition-all"
-                style={{ fontFamily: '"Fira Sans", sans-serif' }}
               />
             </div>
 
@@ -271,7 +270,6 @@ export const PerformanceAdmin: React.FC = () => {
                 value={selectedDept}
                 onChange={(e) => setSelectedDept(e.target.value)}
                 className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent transition-all cursor-pointer"
-                style={{ fontFamily: '"Fira Sans", sans-serif' }}
               >
                 {departments.map((dept) => (
                   <option key={dept} value={dept}>
@@ -297,7 +295,6 @@ export const PerformanceAdmin: React.FC = () => {
                 <div
                   key={rev.id}
                   className="p-5 hover:bg-slate-50 transition-all duration-200 space-y-3 cursor-pointer group"
-                  style={{ fontFamily: '"Fira Sans", sans-serif' }}
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center space-x-3">
@@ -370,7 +367,7 @@ export const PerformanceAdmin: React.FC = () => {
           subtitle="File a quarterly or annual evaluation record for active employee profiles."
           maxWidth="xl"
         >
-          <form onSubmit={handleSubmitReview} className="space-y-5" style={{ fontFamily: '"Fira Sans", sans-serif' }}>
+          <form onSubmit={handleSubmitReview} className="space-y-5">
             {/* Select Employee */}
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">

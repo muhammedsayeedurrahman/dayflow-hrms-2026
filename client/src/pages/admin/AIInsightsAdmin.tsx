@@ -46,7 +46,7 @@ interface AttritionStats {
   acknowledged: number;
 }
 
-const AIInsightsAdmin: React.FC = () => {
+export const AIInsightsAdmin: React.FC = () => {
   const [insights, setInsights] = useState<AIInsight[]>([]);
   const [stats, setStats] = useState<AttritionStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -137,7 +137,6 @@ const AIInsightsAdmin: React.FC = () => {
         icon: RefreshCw,
       }}
     >
-
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -148,15 +147,15 @@ const AIInsightsAdmin: React.FC = () => {
             variant="primary"
           />
           <StatsCard
-            label="Average Risk Score"
-            value={stats.averageScore.toFixed(1)}
-            icon={TrendingUp}
-            variant="warning"
+            label="Critical Risk"
+            value={stats.critical}
+            icon={AlertTriangle}
+            variant="danger"
           />
           <StatsCard
-            label="High Risk"
-            value={stats.critical + stats.high}
-            icon={AlertTriangle}
+            label="Attrition Risk Score"
+            value={`${stats.averageScore.toFixed(0)}%`}
+            icon={TrendingUp}
             variant="danger"
           />
           <StatsCard
@@ -168,35 +167,18 @@ const AIInsightsAdmin: React.FC = () => {
         </div>
       )}
 
-      {/* Filters */}
-      <div
-        className="bg-white rounded-lg p-4 transition-all duration-200"
-        style={{
-          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-          fontFamily: '"Fira Sans", sans-serif',
-        }}
-      >
+      {/* Filters Bar */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/60 shadow-3xs space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5" style={{ color: '#1E40AF' }} />
-            <span className="text-sm font-medium text-gray-700">Filters:</span>
+          <div className="flex items-center gap-2 text-blue-600">
+            <Filter className="w-4 h-4" />
+            <span className="text-xs font-bold text-slate-700">Filters:</span>
           </div>
 
           <select
             value={filterRisk}
             onChange={(e) => setFilterRisk(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
-            style={{
-              fontFamily: '"Fira Sans", sans-serif',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#1E40AF';
-              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#D1D5DB';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
           >
             <option value="">All Risk Levels</option>
             <option value="CRITICAL">Critical</option>
@@ -208,18 +190,7 @@ const AIInsightsAdmin: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
-            style={{
-              fontFamily: '"Fira Sans", sans-serif',
-            }}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = '#1E40AF';
-              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = '#D1D5DB';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+            className="px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
           >
             <option value="">All Types</option>
             <option value="ATTRITION_RISK">Attrition Risk</option>
@@ -234,27 +205,10 @@ const AIInsightsAdmin: React.FC = () => {
                 setFilterRisk('');
                 setFilterType('');
               }}
-              className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2"
-              style={{
-                color: '#1E40AF',
-                fontFamily: '"Fira Sans", sans-serif',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = '#EFF6FF';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent';
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = '#1E40AF';
-                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = 'none';
-              }}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
-              Clear Filters
+              <span>Clear Filters</span>
             </button>
           )}
         </div>
@@ -276,7 +230,7 @@ const AIInsightsAdmin: React.FC = () => {
           insights.map((insight) => (
             <div
               key={insight.id}
-              className={`bg-white rounded-lg p-6 border-l-4 transition-all duration-200 cursor-pointer ${
+              className={`bg-white rounded-2xl p-6 border-l-4 interactive-card cursor-pointer ${
                 insight.riskLevel === 'CRITICAL'
                   ? 'border-red-500'
                   : insight.riskLevel === 'HIGH'
@@ -285,20 +239,8 @@ const AIInsightsAdmin: React.FC = () => {
                   ? 'border-yellow-500'
                   : 'border-green-500'
               }`}
-              style={{
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                fontFamily: '"Fira Sans", sans-serif',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 10px 15px rgba(0,0,0,0.1)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
             >
-              <div className="flex gap-6">
+              <div className="flex flex-col sm:flex-row gap-6">
                 {/* Risk Gauge */}
                 {insight.score !== null && (
                   <div className="flex-shrink-0">
@@ -310,15 +252,12 @@ const AIInsightsAdmin: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3
-                        className="text-lg font-semibold text-gray-900"
-                        style={{ fontFamily: '"Fira Code", monospace' }}
-                      >
+                      <h3 className="text-base font-extrabold text-slate-900 leading-snug">
                         {insight.title}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="blue">{insight.type.replace(/_/g, ' ')}</Badge>
-                        <span className="text-xs text-gray-500">
+                        <Badge variant="indigo">{insight.type.replace(/_/g, ' ')}</Badge>
+                        <span className="text-[10px] font-bold text-slate-400">
                           {new Date(insight.createdAt).toLocaleDateString()}
                         </span>
                         {insight.acknowledgedBy && (
@@ -330,51 +269,24 @@ const AIInsightsAdmin: React.FC = () => {
                     {!insight.acknowledgedBy && (
                       <button
                         onClick={() => handleAcknowledge(insight.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2"
-                        style={{
-                          color: '#1E40AF',
-                          fontFamily: '"Fira Sans", sans-serif',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = '#EFF6FF';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'transparent';
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = '#1E40AF';
-                          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-xl transition-all cursor-pointer"
                       >
-                        <Eye className="w-4 h-4" />
-                        Acknowledge
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Acknowledge</span>
                       </button>
                     )}
                   </div>
 
-                  <p className="text-gray-600 mb-3">{insight.description}</p>
+                  <p className="text-xs text-slate-500 leading-relaxed font-semibold mb-3">
+                    {insight.description}
+                  </p>
 
                   {insight.recommendation && (
-                    <div
-                      className="border rounded-lg p-3 mb-3"
-                      style={{
-                        backgroundColor: '#EFF6FF',
-                        borderColor: '#BFDBFE',
-                      }}
-                    >
-                      <p
-                        className="text-sm font-semibold mb-1"
-                        style={{
-                          color: '#1E40AF',
-                          fontFamily: '"Fira Code", monospace',
-                        }}
-                      >
+                    <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3 mb-3">
+                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-0.5">
                         Recommendations:
                       </p>
-                      <p className="text-sm" style={{ color: '#1E3A8A' }}>
+                      <p className="text-xs font-semibold text-blue-800 leading-relaxed">
                         {insight.recommendation}
                       </p>
                     </div>
@@ -382,28 +294,14 @@ const AIInsightsAdmin: React.FC = () => {
 
                   {insight.metadata?.factors && (
                     <div>
-                      <p
-                        className="text-xs font-medium text-gray-500 mb-2"
-                        style={{ fontFamily: '"Fira Code", monospace' }}
-                      >
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
                         Risk Factors:
                       </p>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         {insight.metadata.factors.map((factor: string, idx: number) => (
                           <span
                             key={idx}
-                            className="text-xs px-2 py-1 rounded transition-colors cursor-default"
-                            style={{
-                              backgroundColor: '#F3F4F6',
-                              color: '#374151',
-                              fontFamily: '"Fira Sans", sans-serif',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#E5E7EB';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = '#F3F4F6';
-                            }}
+                            className="text-[10px] font-bold px-2 py-1 rounded-md bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors cursor-default"
                           >
                             {factor}
                           </span>
@@ -412,8 +310,8 @@ const AIInsightsAdmin: React.FC = () => {
                     </div>
                   )}
 
-                  <div className="mt-3 pt-3 border-t border-gray-200">
-                    <p className="text-xs text-gray-500">
+                  <div className="mt-4 pt-3 border-t border-slate-100">
+                    <p className="text-[10px] font-bold text-slate-400">
                       Confidence: {(insight.confidence * 100).toFixed(0)}%
                     </p>
                   </div>
@@ -438,4 +336,5 @@ const AIInsightsAdmin: React.FC = () => {
     </AdminPageLayout>
   );
 };
+
 export default AIInsightsAdmin;

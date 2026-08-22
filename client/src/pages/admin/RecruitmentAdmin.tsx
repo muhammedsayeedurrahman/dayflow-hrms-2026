@@ -5,7 +5,7 @@ import { Badge } from '../../components/ui/Badge';
 import { AdminPageLayout, StatsCard, LoadingState, EmptyState } from '../../components/shared';
 import { toast } from '../../store/toastStore';
 
-const RecruitmentAdmin: React.FC = () => {
+export const RecruitmentAdmin: React.FC = () => {
   const [jobs, setJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -110,22 +110,14 @@ const RecruitmentAdmin: React.FC = () => {
         </div>
 
         {/* Job Openings List */}
-        <div
-          className="bg-white rounded-lg transition-all duration-200"
-          style={{
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-            fontFamily: '"Fira Sans", sans-serif'
-          }}
-        >
-          <div className="p-6 border-b border-gray-200">
-            <h2
-              className="text-lg font-bold text-gray-900"
-              style={{ fontFamily: '"Fira Code", monospace' }}
-            >
+        <div className="bg-white rounded-2xl p-6 border border-slate-200/60 space-y-4">
+          <div className="pb-4 border-b border-slate-100">
+            <h2 className="text-base font-extrabold text-slate-900">
               Job Openings
             </h2>
           </div>
-          <div className="p-6">
+          
+          <div>
             {jobs.length === 0 ? (
               <EmptyState
                 icon={UserPlus}
@@ -141,17 +133,12 @@ const RecruitmentAdmin: React.FC = () => {
                 {jobs.map((job) => (
                   <div
                     key={job.id}
-                    className="border border-gray-200 rounded-lg p-4 transition-all duration-200 cursor-pointer hover:border-blue-800 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-800"
-                    style={{ fontFamily: '"Fira Sans", sans-serif' }}
-                    tabIndex={0}
+                    className="bg-white border border-slate-200/60 rounded-2xl p-5 interactive-card cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3
-                            className="font-bold text-gray-900"
-                            style={{ fontFamily: '"Fira Code", monospace' }}
-                          >
+                          <h3 className="text-xs font-bold text-slate-900">
                             {job.title}
                           </h3>
                           <Badge
@@ -159,7 +146,7 @@ const RecruitmentAdmin: React.FC = () => {
                               job.status === 'OPEN'
                                 ? 'success'
                                 : job.status === 'FILLED'
-                                ? 'blue'
+                                ? 'indigo'
                                 : 'neutral'
                             }
                           >
@@ -167,11 +154,11 @@ const RecruitmentAdmin: React.FC = () => {
                           </Badge>
                         </div>
                         {job.description && (
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                          <p className="text-[11px] text-slate-500 font-semibold mb-2 line-clamp-2">
                             {job.description}
                           </p>
                         )}
-                        <div className="flex items-center gap-4 text-xs text-gray-500 font-medium">
+                        <div className="flex items-center gap-3 text-[10px] text-slate-400 font-bold">
                           <span>{job.department}</span>
                           <span>•</span>
                           <span>{job.location}</span>
@@ -180,17 +167,14 @@ const RecruitmentAdmin: React.FC = () => {
                         </div>
                       </div>
                       <div className="text-right ml-4">
-                        <p className="text-sm text-gray-500 font-medium">Candidates</p>
-                        <p
-                          className="text-2xl font-bold"
-                          style={{ color: '#1E40AF' }}
-                        >
+                        <p className="text-[10px] text-slate-400 font-bold">Candidates</p>
+                        <p className="text-2xl font-extrabold text-blue-600">
                           {job.candidateCount || 0}
                         </p>
                       </div>
                     </div>
                     {job.postedDate && (
-                      <p className="text-xs text-gray-500 mt-2 font-medium">
+                      <p className="text-[10px] text-slate-400 font-bold mt-2 pt-2 border-t border-slate-100">
                         Posted: {new Date(job.postedDate).toLocaleDateString()}
                       </p>
                     )}
