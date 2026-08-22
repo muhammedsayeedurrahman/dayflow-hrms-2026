@@ -49,7 +49,7 @@ export const getCandidates = async (req: AuthRequest, res: Response, next: NextF
         jobId,
         ...(stage && { stage: stage as string }),
       },
-      orderBy: { appliedAt: 'desc' },
+      orderBy: { applicationDate: 'desc' },
     });
     res.json({ success: true, data: candidates });
   } catch (error) {
