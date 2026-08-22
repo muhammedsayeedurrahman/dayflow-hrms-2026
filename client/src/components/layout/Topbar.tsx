@@ -91,7 +91,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu }) => {
   };
 
   return (
-    <header className="sticky top-4 z-20 flex h-14 w-full items-center justify-between border border-slate-200 bg-white px-4 md:px-6 rounded-2xl shadow-sm floating-nav max-w-7xl mx-auto mt-2">
+    <header className="sticky top-4 z-20 flex h-14 w-full items-center justify-between border border-slate-200/80 bg-white/95 backdrop-blur-md px-4 md:px-6 rounded-2xl shadow-sm floating-nav max-w-7xl mx-auto mt-2 transition-all">
       {/* Left: Mobile menu toggle + SaaS pill navigation */}
       <div className="flex items-center space-x-4">
         <button

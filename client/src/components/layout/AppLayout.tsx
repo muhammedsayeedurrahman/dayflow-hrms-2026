@@ -18,7 +18,7 @@ export const AppLayout: React.FC = () => {
     location.pathname === '/employee';
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex relative overflow-x-hidden">
       {/* Liquid Background Blobs */}
       <div className="liquid-bg-blob -top-40 -left-40" />
       <div className="liquid-bg-blob-2 -bottom-20 -right-20" />
