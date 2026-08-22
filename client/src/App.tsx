@@ -28,6 +28,7 @@ const LeaveAdmin = lazy(() => import('./pages/admin/LeaveAdmin'));
 const PayrollAdmin = lazy(() => import('./pages/admin/PayrollAdmin'));
 const AnalyticsAdmin = lazy(() => import('./pages/admin/AnalyticsAdmin'));
 const NotificationsAdmin = lazy(() => import('./pages/admin/NotificationsAdmin'));
+const AIInsightsAdmin = lazy(() => import('./pages/admin/AIInsightsAdmin'));
 
 function App() {
   const { user, isAuthenticated } = useAuthStore();
@@ -74,6 +75,7 @@ function App() {
           <Route path="/admin/payroll" element={<PayrollAdmin />} />
           <Route path="/admin/analytics" element={<AnalyticsAdmin />} />
           <Route path="/admin/notifications" element={<NotificationsAdmin />} />
+          <Route path="/admin/ai-insights" element={<AIInsightsAdmin />} />
         </Route>
 
         {/* Default Catch-All Route */}

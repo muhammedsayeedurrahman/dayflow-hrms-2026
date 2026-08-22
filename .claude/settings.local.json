@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run build:*)",
+      "Bash(git commit:*)",
+      "Bash(git restore:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npm run prisma:seed:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(bash test-api.sh)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtdDQwc2RxZDAwMDBpdHVrMWIyY2k5a2UiLCJlbXBsb3llZUlkIjoiRU1QMDAxIiwiZW1haWwiOiJockBkYXlmbG93LmNvbSIsInJvbGUiOiJIUiIsImlhdCI6MTc4NzM4MjM5MywiZXhwIjoxNzg3OTg3MTkzfQ.CsyraXtuhi41Uh8B4LtAE8CJJvlqutHfpSvlC_it0nY\")",
+      "Bash(python -m json.tool:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtdDQwc2RxZDAwMDBpdHVrMWIyY2k5a2UiLCJlbXBsb3llZUlkIjoiRU1QMDAxIiwiZW1haWwiOiJockBkYXlmbG93LmNvbSIsInJvbGUiOiJIUiIsImlhdCI6MTc4NzM4MjUxOSwiZXhwIjoxNzg3OTg3MzE5fQ.xl64KfVaAxq85lCHW9Of8qOzEYl7RpVc-DQwHmKBPA8\" echo \"=== Testing Key Endpoints ===\" echo \"\" echo \"1. Get Employees:\" curl -s \"http://localhost:5000/api/employees\" -H \"Authorization: Bearer $TOKEN\")",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtdDQwc2RxZDAwMDBpdHVrMWIyY2k5a2UiLCJlbXBsb3llZUlkIjoiRU1QMDAxIiwiZW1haWwiOiJockBkYXlmbG93LmNvbSIsInJvbGUiOiJIUiIsImlhdCI6MTc4NzM4MjUxOSwiZXhwIjoxNzg3OTg3MzE5fQ.xl64KfVaAxq85lCHW9Of8qOzEYl7RpVc-DQwHmKBPA8\")",
+      "Bash(__NEW_LINE_a8cccf8f6ada9b0f__ echo \"=== Get All Employees ===\")",
+      "Bash(ls:*)",
+      "Bash(gh search:*)"
+    ]
+  }
+}
