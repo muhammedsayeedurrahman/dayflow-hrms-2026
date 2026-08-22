@@ -44,8 +44,6 @@ export default defineConfig({
             ) {
               return 'vendor-state';
             }
-            // All other node_modules go into a generic vendor chunk
-            return 'vendor';
           }
         },
       },
