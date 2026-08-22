@@ -39,6 +39,11 @@ lerna-debug.log*
 *.db
 *.sqlite
 *.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+server/prisma/dev.db
+server/prisma/*.db*
 
 # OS
 Thumbs.db
