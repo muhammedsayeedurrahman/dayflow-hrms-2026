@@ -18,7 +18,8 @@
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImNtdDQwc2RxZDAwMDBpdHVrMWIyY2k5a2UiLCJlbXBsb3llZUlkIjoiRU1QMDAxIiwiZW1haWwiOiJockBkYXlmbG93LmNvbSIsInJvbGUiOiJIUiIsImlhdCI6MTc4NzM4MjUxOSwiZXhwIjoxNzg3OTg3MzE5fQ.xl64KfVaAxq85lCHW9Of8qOzEYl7RpVc-DQwHmKBPA8\")",
       "Bash(__NEW_LINE_a8cccf8f6ada9b0f__ echo \"=== Get All Employees ===\")",
       "Bash(ls:*)",
-      "Bash(gh search:*)"
+      "Bash(gh search:*)",
+      "Bash(server/prisma/schema.prisma:*)"
     ]
   }
 }
