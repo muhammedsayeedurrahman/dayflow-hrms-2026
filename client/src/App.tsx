@@ -29,6 +29,15 @@ const PayrollAdmin = lazy(() => import('./pages/admin/PayrollAdmin'));
 const AnalyticsAdmin = lazy(() => import('./pages/admin/AnalyticsAdmin'));
 const NotificationsAdmin = lazy(() => import('./pages/admin/NotificationsAdmin'));
 const AIInsightsAdmin = lazy(() => import('./pages/admin/AIInsightsAdmin'));
+const SkillsMatrixAdmin = lazy(() => import('./pages/admin/SkillsMatrixAdmin'));
+const PerformanceAdmin = lazy(() => import('./pages/admin/PerformanceAdmin'));
+const OnboardingAdmin = lazy(() => import('./pages/admin/OnboardingAdmin'));
+const ShiftsAdmin = lazy(() => import('./pages/admin/ShiftsAdmin'));
+const ExpensesAdmin = lazy(() => import('./pages/admin/ExpensesAdmin'));
+const LearningAdmin = lazy(() => import('./pages/admin/LearningAdmin'));
+const RecruitmentAdmin = lazy(() => import('./pages/admin/RecruitmentAdmin'));
+const WellnessAdmin = lazy(() => import('./pages/admin/WellnessAdmin'));
+const TimeTrackingAdmin = lazy(() => import('./pages/admin/TimeTrackingAdmin'));
 
 function App() {
   const { user, isAuthenticated } = useAuthStore();
@@ -76,6 +85,15 @@ function App() {
           <Route path="/admin/analytics" element={<AnalyticsAdmin />} />
           <Route path="/admin/notifications" element={<NotificationsAdmin />} />
           <Route path="/admin/ai-insights" element={<AIInsightsAdmin />} />
+          <Route path="/admin/skills" element={<SkillsMatrixAdmin />} />
+          <Route path="/admin/performance" element={<PerformanceAdmin />} />
+          <Route path="/admin/onboarding" element={<OnboardingAdmin />} />
+          <Route path="/admin/shifts" element={<ShiftsAdmin />} />
+          <Route path="/admin/expenses" element={<ExpensesAdmin />} />
+          <Route path="/admin/learning" element={<LearningAdmin />} />
+          <Route path="/admin/recruitment" element={<RecruitmentAdmin />} />
+          <Route path="/admin/wellness" element={<WellnessAdmin />} />
+          <Route path="/admin/time-tracking" element={<TimeTrackingAdmin />} />
         </Route>
 
         {/* Default Catch-All Route */}

@@ -8,7 +8,7 @@ import {
   analyzeSkillGaps,
   getSkillsStats,
 } from '../controllers/skillsController';
-import { authenticate } from '../middleware/authMiddleware';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 

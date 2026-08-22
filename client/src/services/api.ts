@@ -160,6 +160,7 @@ export const onboardingAPI = {
   updateTask: (journeyId: string, taskIndex: number, completed: boolean) =>
     api.put(`/onboarding/journey/${journeyId}/task/${taskIndex}`, { completed }),
   getJourney: (employeeId: string) => api.get(`/onboarding/journey/${employeeId}`),
+  getAllJourneys: () => api.get('/onboarding/journeys'),
 };
 
 // Shift Scheduling API

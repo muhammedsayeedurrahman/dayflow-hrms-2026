@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../utils/prisma';
-import { AuthRequest } from '../middleware/authMiddleware';
+import prisma from '../utils/prisma';
+import { AuthRequest } from '../middleware/auth';
 
 /**
  * Calculate attrition risk score for an employee (0-100)

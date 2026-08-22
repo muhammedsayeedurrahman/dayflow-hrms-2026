@@ -6,7 +6,7 @@ import {
   acknowledgeInsight,
   getAttritionStats,
 } from '../controllers/aiInsightsController';
-import { authenticate } from '../middleware/authMiddleware';
+import { authenticate } from '../middleware/auth';
 
 const router = express.Router();
 

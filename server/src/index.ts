@@ -16,6 +16,14 @@ import notificationRoutes from './routes/notifications';
 import documentRoutes from './routes/documents';
 import aiInsightsRoutes from './routes/aiInsights';
 import skillsRoutes from './routes/skills';
+import performanceRoutes from './routes/performance';
+import onboardingRoutes from './routes/onboarding';
+import shiftsRoutes from './routes/shifts';
+import expensesRoutes from './routes/expenses';
+import learningRoutes from './routes/learning';
+import recruitmentRoutes from './routes/recruitment';
+import wellnessRoutes from './routes/wellness';
+import timeTrackingRoutes from './routes/timeTracking';
 
 dotenv.config();
 
@@ -67,6 +75,14 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/ai/insights', aiInsightsRoutes);
 app.use('/api/skills', skillsRoutes);
+app.use('/api/performance', performanceRoutes);
+app.use('/api/onboarding', onboardingRoutes);
+app.use('/api/shifts', shiftsRoutes);
+app.use('/api/expenses', expensesRoutes);
+app.use('/api/courses', learningRoutes);
+app.use('/api/jobs', recruitmentRoutes);
+app.use('/api/wellness', wellnessRoutes);
+app.use('/api/time-tracking', timeTrackingRoutes);
 
 // 404 handler for unmatched API routes
 app.use('/api/*', (req, res) => {
