@@ -5,6 +5,8 @@ export interface ApiError extends Error {
   errors?: any[];
 }
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 export const errorHandler = (
   err: ApiError,
   req: Request,
@@ -14,20 +16,25 @@ export const errorHandler = (
   const statusCode = err.statusCode || 500;
   const message = err.message || 'Internal Server Error';
 
-  console.error('Error:', {
-    statusCode,
-    message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method
-  });
+  // In development, log full stack trace; in production, log minimal info
+  if (isDev) {
+    console.error(`[${new Date().toISOString()}] ❌ ${req.method} ${req.path}`, {
+      statusCode,
+      message,
+      stack: err.stack,
+    });
+  } else {
+    console.error(`[${new Date().toISOString()}] ❌ ${statusCode} ${req.method} ${req.path} — ${message}`);
+  }
 
   res.status(statusCode).json({
     success: false,
     error: {
       message,
-      ...(err.errors && { errors: err.errors })
-    }
+      ...(err.errors && { errors: err.errors }),
+      // Only include stack in development
+      ...(isDev && err.stack && { stack: err.stack }),
+    },
   });
 };
 
