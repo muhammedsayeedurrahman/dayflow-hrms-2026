@@ -94,7 +94,7 @@ export const PayrollAdmin: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -108,7 +108,7 @@ export const PayrollAdmin: React.FC = () => {
           <p className="text-xs text-slate-500">Manage salary structures, allowances, and monthly payouts</p>
         </div>
 
-        <Badge variant="indigo">Payroll Administrator Active</Badge>
+        <Badge variant="blue">Payroll Administrator Active</Badge>
       </div>
 
       {/* Directory Table */}
@@ -121,7 +121,7 @@ export const PayrollAdmin: React.FC = () => {
               placeholder="Search employee or ID..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:ring-2 focus:ring-blue-800 focus:outline-none"
             />
           </div>
         </div>
@@ -158,13 +158,13 @@ export const PayrollAdmin: React.FC = () => {
                     <td className="py-3.5 px-4 text-rose-600">
                       -₹{pfTax.toLocaleString('en-IN')}
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-indigo-600">
+                    <td className="py-3.5 px-4 font-bold text-blue-800">
                       ₹{netSalary.toLocaleString('en-IN')}
                     </td>
                     <td className="py-3.5 px-4">
                       <button
                         onClick={() => openEditModal(emp)}
-                        className="flex items-center space-x-1 font-bold text-indigo-600 hover:text-indigo-700"
+                        className="flex items-center space-x-1 font-bold text-blue-800 hover:text-blue-900"
                       >
                         <Edit className="h-3.5 w-3.5" />
                         <span>Edit Structure</span>
@@ -201,7 +201,7 @@ export const PayrollAdmin: React.FC = () => {
                     type="number"
                     value={basic}
                     onChange={(e) => setBasic(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-800"
                   />
                 </div>
                 <div>
@@ -210,7 +210,7 @@ export const PayrollAdmin: React.FC = () => {
                     type="number"
                     value={hra}
                     onChange={(e) => setHra(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-800"
                   />
                 </div>
                 <div>
@@ -221,7 +221,7 @@ export const PayrollAdmin: React.FC = () => {
                     type="number"
                     value={allowance}
                     onChange={(e) => setAllowance(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:outline-none focus:ring-2 focus:ring-blue-800"
                   />
                 </div>
                 <div>
@@ -232,7 +232,7 @@ export const PayrollAdmin: React.FC = () => {
                     type="number"
                     value={pf}
                     onChange={(e) => setPf(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium text-rose-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium text-rose-600 focus:outline-none focus:ring-2 focus:ring-blue-800"
                   />
                 </div>
                 <div className="col-span-2">
@@ -241,12 +241,12 @@ export const PayrollAdmin: React.FC = () => {
                     type="number"
                     value={tax}
                     onChange={(e) => setTax(Number(e.target.value))}
-                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium text-rose-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium text-rose-600 focus:outline-none focus:ring-2 focus:ring-blue-800"
                   />
                 </div>
               </div>
 
-              <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100 font-bold flex justify-between text-indigo-900">
+              <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 font-bold flex justify-between text-blue-900">
                 <span>Calculated Net Pay:</span>
                 <span>₹{(Number(basic) + Number(hra) + Number(allowance) - (Number(pf) + Number(tax))).toLocaleString('en-IN')}</span>
               </div>
@@ -263,7 +263,7 @@ export const PayrollAdmin: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitLoading}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs shadow-md disabled:opacity-50"
                 >
                   {isSubmitLoading ? 'Saving...' : 'Save Salary Revision'}
                 </button>

@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Award, Plus, Star, Search, Sparkles, CheckCircle2, Filter } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Award, Plus, Star, Search, Sparkles, CheckCircle2, Filter, AlertCircle, TrendingUp } from 'lucide-react';
 import { api } from '../../services/api';
+import { AdminPageLayout } from '../../components/shared/AdminPageLayout';
+import { StatsCard } from '../../components/shared/StatsCard';
+import { LoadingState } from '../../components/shared/LoadingState';
 import { Modal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
 
@@ -17,13 +20,25 @@ interface Review {
   date: string;
 }
 
+interface ValidationErrors {
+  employeeId?: string;
+  feedback?: string;
+  goals?: string;
+}
+
+const MAX_FEEDBACK_LENGTH = 500;
+const MAX_GOALS_LENGTH = 500;
+const SEARCH_DEBOUNCE_MS = 300;
+
 export const PerformanceAdmin: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedDept, setSelectedDept] = useState('All');
-  
+  const [isLoading, setIsLoading] = useState(true);
+
   // Form states
   const [employeeId, setEmployeeId] = useState('');
   const [rating, setRating] = useState(5);
@@ -31,9 +46,10 @@ export const PerformanceAdmin: React.FC = () => {
   const [feedback, setFeedback] = useState('');
   const [goals, setGoals] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
 
-  // Preseeded mock review list to avoid initial empty state
-  const defaultReviews: Review[] = [
+  // Default reviews - in production, these would come from API
+  const defaultReviews: Review[] = useMemo(() => [
     {
       id: 'rev-1',
       employeeId: 'emp-1',
@@ -70,34 +86,65 @@ export const PerformanceAdmin: React.FC = () => {
       goals: 'Reduce overall time-to-hire by 10%, refine recruitment pipeline stats reports',
       date: '2026-10-12',
     },
-  ];
+  ], []);
 
-  const fetchInitialData = async () => {
+  const fetchInitialData = useCallback(async () => {
+    setIsLoading(true);
     try {
       const empRes = await api.get('/employees');
       setEmployees(empRes.data.data);
-      
-      const localRev = localStorage.getItem('dayflow_performance_reviews');
-      if (localRev) {
-        setReviews(JSON.parse(localRev));
-      } else {
-        localStorage.setItem('dayflow_performance_reviews', JSON.stringify(defaultReviews));
-        setReviews(defaultReviews);
-      }
+      setReviews(defaultReviews);
     } catch (err) {
       console.error('Failed to load performance data:', err);
+      setReviews(defaultReviews);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [defaultReviews]);
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [fetchInitialData]);
+
+  // Search debouncing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const validateForm = (): boolean => {
+    const errors: ValidationErrors = {};
+
+    if (!employeeId) {
+      errors.employeeId = 'Please select an employee';
+    }
+
+    if (!feedback.trim()) {
+      errors.feedback = 'Feedback is required';
+    } else if (feedback.length > MAX_FEEDBACK_LENGTH) {
+      errors.feedback = `Feedback must not exceed ${MAX_FEEDBACK_LENGTH} characters`;
+    }
+
+    if (goals.length > MAX_GOALS_LENGTH) {
+      errors.goals = `Goals must not exceed ${MAX_GOALS_LENGTH} characters`;
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!employeeId) return;
+
+    if (!validateForm()) {
+      return;
+    }
+
     setIsSubmitting(true);
-    
+
     try {
       const emp = employees.find(e => e.id === employeeId);
       const newReview: Review = {
@@ -114,15 +161,15 @@ export const PerformanceAdmin: React.FC = () => {
       };
 
       const updated = [newReview, ...reviews];
-      localStorage.setItem('dayflow_performance_reviews', JSON.stringify(updated));
       setReviews(updated);
-      
+
       // Reset form
       setEmployeeId('');
       setRating(5);
       setPeriod('Q4 2026');
       setFeedback('');
       setGoals('');
+      setValidationErrors({});
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
@@ -134,263 +181,354 @@ export const PerformanceAdmin: React.FC = () => {
   const departments = ['All', ...Array.from(new Set(reviews.map((r) => r.department)))];
 
   const filteredReviews = reviews.filter((r) => {
-    const matchesSearch = r.employeeName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          r.feedback.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = r.employeeName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                          r.feedback.toLowerCase().includes(debouncedSearch.toLowerCase());
     const matchesDept = selectedDept === 'All' || r.department === selectedDept;
     return matchesSearch && matchesDept;
   });
 
   const avgRating = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : '0';
+  const goalCompletionRate = 84; // Mock data - in production would come from API
+
+  if (isLoading) {
+    return (
+      <AdminPageLayout
+        title="Performance Management"
+        description="Monitor goals, track appraisals, and submit comprehensive performance reviews."
+        icon={Award}
+      >
+        <LoadingState type="stats" />
+      </AdminPageLayout>
+    );
+  }
 
   return (
-    <div className="space-y-6 page-enter-transition">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Performance Management</h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Monitor goals, track appraisals, and submit comprehensive performance reviews.
-          </p>
-        </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all shadow-xs cursor-pointer active:scale-95"
-        >
-          <Plus className="h-4 w-4" />
-          <span>New Review</span>
-        </button>
-      </div>
+    <AdminPageLayout
+      title="Performance Management"
+      description="Monitor goals, track appraisals, and submit comprehensive performance reviews."
+      icon={Award}
+      action={{
+        label: 'New Review',
+        onClick: () => setIsModalOpen(true),
+        icon: Plus,
+      }}
+    >
+      <div className="space-y-6">
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <StatsCard
+            label="Average Appraisal Rating"
+            value={`${avgRating} / 5.0`}
+            icon={Star}
+            variant="warning"
+            trend={{
+              value: `Based on ${reviews.length} reviews`,
+              isPositive: true,
+            }}
+          />
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl">
-          <div className="flex justify-between items-start">
-            <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Appraisal Rating</span>
-              <h3 className="text-3xl font-extrabold text-slate-900 mt-1 flex items-center space-x-1.5">
-                <span>{avgRating}</span>
-                <span className="text-sm font-bold text-slate-400">/ 5.0</span>
-              </h3>
-            </div>
-            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-600">
-              <Star className="h-5 w-5 fill-current" />
-            </div>
-          </div>
-          <p className="text-[10px] text-slate-500 font-bold mt-3">Calculated from {reviews.length} reviews</p>
-        </div>
+          <StatsCard
+            label="Active Goals Completed"
+            value={`${goalCompletionRate}%`}
+            icon={CheckCircle2}
+            variant="success"
+            trend={{
+              value: '+6% from last quarter',
+              isPositive: true,
+            }}
+          />
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl">
-          <div className="flex justify-between items-start">
-            <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Goals Completed</span>
-              <h3 className="text-3xl font-extrabold text-slate-900 mt-1">84%</h3>
-            </div>
-            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-          </div>
-          <p className="text-[10px] text-green-600 font-bold mt-3">+6% from last quarter</p>
+          <StatsCard
+            label="Total Reviews"
+            value={reviews.length}
+            icon={Award}
+            variant="primary"
+            trend={{
+              value: 'Verified by HR team',
+              isPositive: true,
+            }}
+          />
         </div>
 
-        <div className="bg-white border border-slate-200 p-5 rounded-2xl">
-          <div className="flex justify-between items-start">
-            <div>
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Appraisal Reviews</span>
-              <h3 className="text-3xl font-extrabold text-slate-900 mt-1">{reviews.length}</h3>
+        {/* Filter and Search Controls */}
+        <div className="bg-white border border-slate-200 rounded-lg p-6 shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="relative w-full md:max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search reviews..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-4 py-2.5 w-full bg-slate-50 border border-slate-200 rounded-lg text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent transition-all"
+                style={{ fontFamily: '"Fira Sans", sans-serif' }}
+              />
             </div>
-            <div className="p-2.5 rounded-xl bg-purple-50 text-purple-600">
-              <Award className="h-5 w-5" />
+
+            <div className="flex items-center space-x-2 w-full md:w-auto">
+              <Filter className="h-4 w-4 text-slate-400" />
+              <select
+                value={selectedDept}
+                onChange={(e) => setSelectedDept(e.target.value)}
+                className="px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent transition-all cursor-pointer"
+                style={{ fontFamily: '"Fira Sans", sans-serif' }}
+              >
+                {departments.map((dept) => (
+                  <option key={dept} value={dept}>
+                    {dept}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
-          <p className="text-[10px] text-slate-500 font-bold mt-3">Fully verified by HR team</p>
-        </div>
-      </div>
 
-      {/* Filter and Search Controls */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-xs space-y-4">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full md:max-w-xs">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search reviews..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-200 rounded-full text-xs font-semibold focus:bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all"
-            />
-          </div>
-
-          <div className="flex items-center space-x-2 w-full md:w-auto">
-            <Filter className="h-3.5 w-3.5 text-slate-400" />
-            <select
-              value={selectedDept}
-              onChange={(e) => setSelectedDept(e.target.value)}
-              className="px-3 py-1.5 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            >
-              {departments.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Reviews List */}
-        <div className="divide-y divide-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
-          {filteredReviews.length === 0 ? (
-            <div className="text-center py-10 text-xs text-slate-400">No performance records matched your filters.</div>
-          ) : (
-            filteredReviews.map((rev) => (
-              <div key={rev.id} className="p-5 hover:bg-slate-50/50 transition-colors space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                      {rev.employeeName.split(' ').map((n) => n[0]).join('')}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-slate-900">{rev.employeeName}</h4>
-                      <p className="text-[10px] text-slate-500 font-medium">
-                        {rev.designation} • <span className="font-bold text-slate-400">{rev.department}</span>
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="info">{rev.period}</Badge>
-                    <div className="flex items-center text-amber-500">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`h-3 w-3 ${i < rev.rating ? 'fill-current' : 'text-slate-200'}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
+          {/* Reviews List */}
+          <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg overflow-hidden">
+            {filteredReviews.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
+                  <Search className="w-8 h-8 text-slate-400" />
                 </div>
-
-                <div className="pl-11 space-y-2">
-                  <div>
-                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Evaluation & Feedback</span>
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium mt-0.5">{rev.feedback}</p>
-                  </div>
-                  {rev.goals && (
-                    <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 flex items-start space-x-2">
-                      <Sparkles className="h-3.5 w-3.5 text-blue-500 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-slate-500 font-medium">No performance records matched your filters.</p>
+                <p className="text-xs text-slate-400 mt-1">Try adjusting your search or filter criteria.</p>
+              </div>
+            ) : (
+              filteredReviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-5 hover:bg-slate-50 transition-all duration-200 space-y-3 cursor-pointer group"
+                  style={{ fontFamily: '"Fira Sans", sans-serif' }}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 rounded-lg bg-blue-50 text-blue-800 flex items-center justify-center font-bold text-sm group-hover:bg-blue-100 transition-colors">
+                        {rev.employeeName.split(' ').map((n) => n[0]).join('')}
+                      </div>
                       <div>
-                        <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider">Quarterly Objectives (KPIs)</span>
-                        <p className="text-[11px] text-slate-600 font-semibold mt-0.5">{rev.goals}</p>
+                        <h4 className="text-sm font-bold text-slate-900">{rev.employeeName}</h4>
+                        <p className="text-xs text-slate-500 font-medium">
+                          {rev.designation} • <span className="font-semibold text-slate-600">{rev.department}</span>
+                        </p>
                       </div>
                     </div>
-                  )}
-                  <span className="block text-[9px] text-slate-400 font-bold">Reviewed on {rev.date}</span>
+
+                    <div className="flex items-center space-x-3">
+                      <Badge variant="info">{rev.period}</Badge>
+                      <div className="flex items-center text-amber-500">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${i < rev.rating ? 'fill-current' : 'text-slate-200'}`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pl-0 sm:pl-13 space-y-3">
+                    <div>
+                      <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                        Evaluation & Feedback
+                      </span>
+                      <p className="text-sm text-slate-700 leading-relaxed font-medium">{rev.feedback}</p>
+                    </div>
+                    {rev.goals && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex items-start space-x-3 hover:border-blue-200 transition-colors">
+                        <Sparkles className="h-4 w-4 text-blue-800 mt-0.5 flex-shrink-0" />
+                        <div className="flex-1">
+                          <span className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
+                            Quarterly Objectives (KPIs)
+                          </span>
+                          <p className="text-sm text-slate-700 font-medium">{rev.goals}</p>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                      <TrendingUp className="h-3 w-3" />
+                      <span>Reviewed on {rev.date}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
+
+        {/* Modal - New Review appraisal dialog */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setValidationErrors({});
+            setEmployeeId('');
+            setRating(5);
+            setPeriod('Q4 2026');
+            setFeedback('');
+            setGoals('');
+          }}
+          title="Submit Performance Review"
+          subtitle="File a quarterly or annual evaluation record for active employee profiles."
+          maxWidth="xl"
+        >
+          <form onSubmit={handleSubmitReview} className="space-y-5" style={{ fontFamily: '"Fira Sans", sans-serif' }}>
+            {/* Select Employee */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700">
+                Select Employee <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={employeeId}
+                onChange={(e) => {
+                  setEmployeeId(e.target.value);
+                  setValidationErrors({ ...validationErrors, employeeId: undefined });
+                }}
+                className={`w-full px-3 py-2.5 border rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent transition-all cursor-pointer ${
+                  validationErrors.employeeId ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                }`}
+                required
+              >
+                <option value="">Choose an employee...</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.fullName} ({emp.employee?.designation || 'Staff'})
+                  </option>
+                ))}
+              </select>
+              {validationErrors.employeeId && (
+                <div className="flex items-center gap-1 text-red-600 text-xs mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{validationErrors.employeeId}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Appraisal period & Rating */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Review Period</label>
+                <select
+                  value={period}
+                  onChange={(e) => setPeriod(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent transition-all cursor-pointer"
+                >
+                  <option value="Q3 2026">Q3 2026</option>
+                  <option value="Q4 2026">Q4 2026</option>
+                  <option value="Annual 2026">Annual 2026</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Appraisal Rating</label>
+                <select
+                  value={rating}
+                  onChange={(e) => setRating(Number(e.target.value))}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent transition-all cursor-pointer"
+                >
+                  <option value={5}>⭐⭐⭐⭐⭐ Excellent Performance</option>
+                  <option value={4}>⭐⭐⭐⭐ Above Expectations</option>
+                  <option value={3}>⭐⭐⭐ Meets Expectations</option>
+                  <option value={2}>⭐⭐ Below Expectations</option>
+                  <option value={1}>⭐ Unsatisfactory</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Feedback */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-slate-700">
+                  Manager Evaluation & Feedback <span className="text-red-500">*</span>
+                </label>
+                <span className={`text-xs font-medium ${
+                  feedback.length > MAX_FEEDBACK_LENGTH ? 'text-red-500' : 'text-slate-400'
+                }`}>
+                  {feedback.length}/{MAX_FEEDBACK_LENGTH}
+                </span>
+              </div>
+              <textarea
+                value={feedback}
+                onChange={(e) => {
+                  setFeedback(e.target.value);
+                  setValidationErrors({ ...validationErrors, feedback: undefined });
+                }}
+                placeholder="Detail accomplishments, strengths, work ethics, areas of improvement..."
+                className={`w-full px-3 py-2.5 border rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent min-h-[110px] resize-none transition-all ${
+                  validationErrors.feedback ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                }`}
+                required
+                maxLength={MAX_FEEDBACK_LENGTH}
+              />
+              {validationErrors.feedback && (
+                <div className="flex items-center gap-1 text-red-600 text-xs mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{validationErrors.feedback}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Goals */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-semibold text-slate-700">
+                  Quarterly Objectives & Goals (KPIs)
+                </label>
+                <span className={`text-xs font-medium ${
+                  goals.length > MAX_GOALS_LENGTH ? 'text-red-500' : 'text-slate-400'
+                }`}>
+                  {goals.length}/{MAX_GOALS_LENGTH}
+                </span>
+              </div>
+              <textarea
+                value={goals}
+                onChange={(e) => {
+                  setGoals(e.target.value);
+                  setValidationErrors({ ...validationErrors, goals: undefined });
+                }}
+                placeholder="e.g. Mentor junior devs, complete accessibility audits, lead migration project..."
+                className={`w-full px-3 py-2.5 border rounded-lg text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-800 focus:border-transparent min-h-[80px] resize-none transition-all ${
+                  validationErrors.goals ? 'border-red-300 bg-red-50' : 'border-slate-200'
+                }`}
+                maxLength={MAX_GOALS_LENGTH}
+              />
+              {validationErrors.goals && (
+                <div className="flex items-center gap-1 text-red-600 text-xs mt-1">
+                  <AlertCircle className="h-3 w-3" />
+                  <span>{validationErrors.goals}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Submit */}
+            <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setValidationErrors({});
+                  setEmployeeId('');
+                  setRating(5);
+                  setPeriod('Q4 2026');
+                  setFeedback('');
+                  setGoals('');
+                }}
+                className="px-5 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-300 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-5 py-2.5 rounded-lg text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 cursor-pointer hover:opacity-90 hover:-translate-y-0.5"
+                style={{ backgroundColor: '#F59E0B' }}
+              >
+                {isSubmitting ? 'Filing Record...' : 'Submit Appraisal'}
+              </button>
+            </div>
+          </form>
+        </Modal>
       </div>
-
-      {/* Modal - New Review appraisal dialog */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Submit Performance Review"
-        subtitle="File a quarterly or annual evaluation record for active employee profiles."
-      >
-        <form onSubmit={handleSubmitReview} className="space-y-4 pt-2 pb-1">
-          {/* Select Employee */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Select Employee</label>
-            <select
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              required
-            >
-              <option value="">Choose an employee...</option>
-              {employees.map((emp) => (
-                <option key={emp.id} value={emp.id}>
-                  {emp.fullName} ({emp.employee?.designation || 'Staff'})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Appraisal period & Rating */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Review Period</label>
-              <select
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value="Q3 2026">Q3 2026</option>
-                <option value="Q4 2026">Q4 2026</option>
-                <option value="Annual 2026">Annual 2026</option>
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Appraisal Rating</label>
-              <select
-                value={rating}
-                onChange={(e) => setRating(Number(e.target.value))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              >
-                <option value={5}>5 - Excellent Performance</option>
-                <option value={4}>4 - Above Expectations</option>
-                <option value={3}>3 - Meets Expectations</option>
-                <option value={2}>2 - Below Expectations</option>
-                <option value={1}>1 - Unsatisfactory</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Feedback */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Manager Evaluation & Feedback</label>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder="Detail accomplishments, strengths, work ethics..."
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[90px]"
-              required
-            />
-          </div>
-
-          {/* Goals */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Quarterly Objectives & Goals (KPIs)</label>
-            <textarea
-              value={goals}
-              onChange={(e) => setGoals(e.target.value)}
-              placeholder="e.g. Mentor junior devs, complete accessibility audits..."
-              className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[60px]"
-            />
-          </div>
-
-          {/* Submit */}
-          <div className="flex items-center justify-end space-x-2 pt-2">
-            <button
-              type="button"
-              onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 border border-slate-200 rounded-full text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
-            >
-              {isSubmitting ? 'Filing Record...' : 'Submit Appraisal'}
-            </button>
-          </div>
-        </form>
-      </Modal>
-    </div>
+    </AdminPageLayout>
   );
 };
+
 export default PerformanceAdmin;

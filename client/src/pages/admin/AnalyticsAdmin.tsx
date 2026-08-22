@@ -54,7 +54,7 @@ export const AnalyticsAdmin: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -78,12 +78,12 @@ export const AnalyticsAdmin: React.FC = () => {
   // 2. Leave Type Distribution (Pie Chart)
   const leaveDistributionData = leaveStats?.byType
     ? [
-        { name: 'Paid Leave', value: leaveStats.byType.PAID || 0, color: '#4f46e5' },
+        { name: 'Paid Leave', value: leaveStats.byType.PAID || 0, color: '#1e40af' },
         { name: 'Sick Leave', value: leaveStats.byType.SICK || 0, color: '#10b981' },
         { name: 'Unpaid Leave', value: leaveStats.byType.UNPAID || 0, color: '#ef4444' },
       ].filter(item => item.value > 0)
     : [
-        { name: 'Paid Leave', value: 4, color: '#4f46e5' },
+        { name: 'Paid Leave', value: 4, color: '#1e40af' },
         { name: 'Sick Leave', value: 2, color: '#10b981' },
         { name: 'Unpaid Leave', value: 1, color: '#ef4444' },
       ];
@@ -139,7 +139,7 @@ export const AnalyticsAdmin: React.FC = () => {
 
         <button
           onClick={handleExportCSV}
-          className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-50 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all"
+          className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs shadow-lg shadow-blue-800/30 transition-all"
         >
           <Download className="h-4 w-4" />
           <span>Export Analytics Report (CSV)</span>
@@ -164,7 +164,7 @@ export const AnalyticsAdmin: React.FC = () => {
                 <YAxis stroke="#94a3b8" fontSize={11} />
                 <Tooltip />
                 <Legend />
-                <Line type="monotone" dataKey="Present" stroke="#4f46e5" strokeWidth={3} activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="Present" stroke="#1e40af" strokeWidth={3} activeDot={{ r: 6 }} />
                 <Line type="monotone" dataKey="OnLeave" stroke="#f59e0b" strokeWidth={2} />
                 <Line type="monotone" dataKey="Absent" stroke="#ef4444" strokeWidth={2} />
               </LineChart>
@@ -214,7 +214,7 @@ export const AnalyticsAdmin: React.FC = () => {
                 <XAxis dataKey="dept" stroke="#94a3b8" fontSize={11} />
                 <YAxis stroke="#94a3b8" fontSize={11} />
                 <Tooltip />
-                <Bar dataKey="Headcount" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="Headcount" fill="#1e40af" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

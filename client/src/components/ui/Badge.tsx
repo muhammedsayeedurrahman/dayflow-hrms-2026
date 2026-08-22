@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface BadgeProps {
-  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'indigo';
+  variant?: 'success' | 'warning' | 'danger' | 'info' | 'neutral' | 'blue' | 'indigo';
   children: React.ReactNode;
   className?: string;
   size?: 'sm' | 'md';
@@ -16,7 +16,8 @@ export const Badge: React.FC<BadgeProps> = ({ variant = 'neutral', children, cla
     warning: 'bg-amber-50 text-amber-700 border border-amber-200/80',
     danger: 'bg-rose-50 text-rose-700 border border-rose-200/80',
     info: 'bg-sky-50 text-sky-700 border border-sky-200/80',
-    indigo: 'bg-indigo-50 text-indigo-700 border border-indigo-200/80',
+    blue: 'bg-blue-50 text-blue-800 border border-blue-200/80',
+    indigo: 'bg-blue-50 text-blue-800 border border-blue-200/80', // Alias for backwards compatibility
     neutral: 'bg-slate-100 text-slate-700 border border-slate-200',
   };
 

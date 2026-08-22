@@ -2,6 +2,7 @@ import React, { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 import { PageLoadingFallback } from './components/ui/LoadingSpinner';
+import { ToastContainer } from './components/ui/ToastContainer';
 
 // Layout
 import { AppLayout } from './components/layout/AppLayout';
@@ -55,6 +56,7 @@ function App() {
 
   return (
     <Suspense fallback={<PageLoadingFallback />}>
+      <ToastContainer />
       <Routes>
         {/* Public Auth Routes */}
         <Route path="/login" element={<Login />} />

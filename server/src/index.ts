@@ -24,6 +24,7 @@ import learningRoutes from './routes/learning';
 import recruitmentRoutes from './routes/recruitment';
 import wellnessRoutes from './routes/wellness';
 import timeTrackingRoutes from './routes/timeTracking';
+import chatbotRoutes from './routes/chatbot';
 
 dotenv.config();
 
@@ -83,6 +84,7 @@ app.use('/api/courses', learningRoutes);
 app.use('/api/jobs', recruitmentRoutes);
 app.use('/api/wellness', wellnessRoutes);
 app.use('/api/time-tracking', timeTrackingRoutes);
+app.use('/api/chatbot', chatbotRoutes);
 
 // 404 handler for unmatched API routes
 app.use('/api/*', (req, res) => {

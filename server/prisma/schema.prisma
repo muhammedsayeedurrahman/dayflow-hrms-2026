@@ -79,11 +79,11 @@ enum SkillCategory {
 }
 
 enum ProficiencyLevel {
-  BEGINNER      // 1
-  INTERMEDIATE  // 2
-  ADVANCED      // 3
-  EXPERT        // 4
-  MASTER        // 5
+  BEGINNER // 1
+  INTERMEDIATE // 2
+  ADVANCED // 3
+  EXPERT // 4
+  MASTER // 5
 }
 
 enum GoalType {
@@ -110,19 +110,21 @@ enum ReviewStatus {
 
 // User authentication and authorization
 model User {
-  id                String    @id @default(cuid())
-  employeeId        String    @unique
-  email             String    @unique
-  password          String
-  role              Role      @default(EMPLOYEE)
-  emailVerified     Boolean   @default(false)
-  emailVerifiedAt   DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  employeeId      String    @unique
+  email           String    @unique
+  password        String
+  role            Role      @default(EMPLOYEE)
+  emailVerified   Boolean   @default(false)
+  emailVerifiedAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
-  employee          Employee?
-  notifications     Notification[]
+  employee            Employee?
+  notifications       Notification[]
+  interviewsConducted Interview[]
+  candidateRatings    CandidateRating[]
 
   @@index([email])
   @@index([employeeId])
@@ -130,46 +132,46 @@ model User {
 
 // Employee profile and details
 model Employee {
-  id                String    @id @default(cuid())
-  userId            String    @unique
+  id     String @id @default(cuid())
+  userId String @unique
 
   // Personal Details
-  firstName         String
-  lastName          String
-  fullName          String
-  dateOfBirth       DateTime?
-  gender            String?
-  phone             String?
-  address           String?
-  city              String?
-  state             String?
-  zipCode           String?
-  country           String?   @default("India")
+  firstName   String
+  lastName    String
+  fullName    String
+  dateOfBirth DateTime?
+  gender      String?
+  phone       String?
+  address     String?
+  city        String?
+  state       String?
+  zipCode     String?
+  country     String?   @default("India")
 
   // Job Details
-  designation       String?
-  department        String?
-  joiningDate       DateTime  @default(now())
-  employmentType    String?   // Full-time, Part-time, Contract
-  managerId         String?
+  designation    String?
+  department     String?
+  joiningDate    DateTime @default(now())
+  employmentType String? // Full-time, Part-time, Contract
+  managerId      String?
 
   // Profile
-  profilePicture    String?
-  bio               String?
+  profilePicture String?
+  bio            String?
 
   // System
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  manager           Employee? @relation("EmployeeManager", fields: [managerId], references: [id])
-  managedEmployees  Employee[] @relation("EmployeeManager")
-  attendance        Attendance[]
-  leaveRequests     LeaveRequest[]
-  payroll           Payroll?
-  documents         Document[]
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manager          Employee?      @relation("EmployeeManager", fields: [managerId], references: [id])
+  managedEmployees Employee[]     @relation("EmployeeManager")
+  attendance       Attendance[]
+  leaveRequests    LeaveRequest[]
+  payroll          Payroll?
+  documents        Document[]
 
   @@index([userId])
   @@index([department])
@@ -178,19 +180,19 @@ model Employee {
 
 // Attendance tracking
 model Attendance {
-  id                String           @id @default(cuid())
-  employeeId        String
-  date              DateTime
-  status            AttendanceStatus @default(PRESENT)
-  checkInTime       DateTime?
-  checkOutTime      DateTime?
-  workHours         Float?           // Calculated work hours
-  remarks           String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
+  id           String           @id @default(cuid())
+  employeeId   String
+  date         DateTime
+  status       AttendanceStatus @default(PRESENT)
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+  workHours    Float? // Calculated work hours
+  remarks      String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 
   // Relations
-  employee          Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, date])
   @@index([employeeId])
@@ -200,26 +202,26 @@ model Attendance {
 
 // Leave and time-off management
 model LeaveRequest {
-  id                String       @id @default(cuid())
-  employeeId        String
-  leaveType         LeaveType
-  status            LeaveStatus  @default(PENDING)
-  startDate         DateTime
-  endDate           DateTime
-  totalDays         Int
-  reason            String?
-  remarks           String?
+  id         String      @id @default(cuid())
+  employeeId String
+  leaveType  LeaveType
+  status     LeaveStatus @default(PENDING)
+  startDate  DateTime
+  endDate    DateTime
+  totalDays  Int
+  reason     String?
+  remarks    String?
 
   // Approval workflow
-  reviewedBy        String?
-  reviewedAt        DateTime?
-  reviewComments    String?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  reviewComments String?
 
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  employee          Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
   @@index([status])
@@ -229,66 +231,66 @@ model LeaveRequest {
 
 // Payroll and salary management
 model Payroll {
-  id                String    @id @default(cuid())
-  employeeId        String    @unique
+  id         String @id @default(cuid())
+  employeeId String @unique
 
   // Salary Structure
-  basicSalary       Float
-  hra               Float?    // House Rent Allowance
+  basicSalary        Float
+  hra                Float? // House Rent Allowance
   transportAllowance Float?
-  medicalAllowance  Float?
-  otherAllowances   Float?
+  medicalAllowance   Float?
+  otherAllowances    Float?
 
   // Deductions
-  providentFund     Float?
-  tax               Float?
-  otherDeductions   Float?
+  providentFund   Float?
+  tax             Float?
+  otherDeductions Float?
 
   // Calculated
-  grossSalary       Float
-  netSalary         Float
+  grossSalary Float
+  netSalary   Float
 
   // Banking
-  bankName          String?
-  accountNumber     String?
-  ifscCode          String?
+  bankName      String?
+  accountNumber String?
+  ifscCode      String?
 
-  effectiveFrom     DateTime  @default(now())
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  effectiveFrom DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   // Relations
-  employee          Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  salarySlips       SalarySlip[]
+  employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  salarySlips SalarySlip[]
 
   @@index([employeeId])
 }
 
 // Monthly salary slips
 model SalarySlip {
-  id                String    @id @default(cuid())
-  payrollId         String
-  month             Int       // 1-12
-  year              Int
+  id        String @id @default(cuid())
+  payrollId String
+  month     Int // 1-12
+  year      Int
 
   // Salary breakdown
-  basicSalary       Float
-  allowances        Float
-  deductions        Float
-  grossSalary       Float
-  netSalary         Float
+  basicSalary Float
+  allowances  Float
+  deductions  Float
+  grossSalary Float
+  netSalary   Float
 
   // Attendance impact
-  workingDays       Int
-  presentDays       Int
-  absentDays        Int
-  leaveDays         Int
+  workingDays Int
+  presentDays Int
+  absentDays  Int
+  leaveDays   Int
 
-  paidDate          DateTime?
-  generatedAt       DateTime  @default(now())
+  paidDate    DateTime?
+  generatedAt DateTime  @default(now())
 
   // Relations
-  payroll           Payroll   @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+  payroll Payroll @relation(fields: [payrollId], references: [id], onDelete: Cascade)
 
   @@unique([payrollId, month, year])
   @@index([payrollId])
@@ -297,19 +299,19 @@ model SalarySlip {
 
 // Document management
 model Document {
-  id                String         @id @default(cuid())
-  employeeId        String
-  documentType      DocumentType
-  fileName          String
-  filePath          String
-  fileSize          Int
-  mimeType          String?
-  description       String?
-  uploadedBy        String
-  uploadedAt        DateTime       @default(now())
+  id           String       @id @default(cuid())
+  employeeId   String
+  documentType DocumentType
+  fileName     String
+  filePath     String
+  fileSize     Int
+  mimeType     String?
+  description  String?
+  uploadedBy   String
+  uploadedAt   DateTime     @default(now())
 
   // Relations
-  employee          Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   @@index([employeeId])
   @@index([documentType])
@@ -317,17 +319,17 @@ model Document {
 
 // Notifications system
 model Notification {
-  id                String             @id @default(cuid())
-  userId            String
-  type              NotificationType
-  title             String
-  message           String
-  isRead            Boolean            @default(false)
-  metadata          Json?              // Additional data as JSON
-  createdAt         DateTime           @default(now())
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json? // Additional data as JSON
+  createdAt DateTime         @default(now())
 
   // Relations
-  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([isRead])
@@ -336,15 +338,15 @@ model Notification {
 
 // Activity log for audit trail
 model ActivityLog {
-  id                String    @id @default(cuid())
-  userId            String
-  action            String    // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
-  entity            String    // USER, EMPLOYEE, ATTENDANCE, LEAVE, PAYROLL
-  entityId          String?
-  details           Json?
-  ipAddress         String?
-  userAgent         String?
-  createdAt         DateTime  @default(now())
+  id        String   @id @default(cuid())
+  userId    String
+  action    String // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  entity    String // USER, EMPLOYEE, ATTENDANCE, LEAVE, PAYROLL
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([action])
@@ -354,21 +356,21 @@ model ActivityLog {
 
 // AI-Powered Insights
 model AIInsight {
-  id                String       @id @default(cuid())
-  type              InsightType
-  employeeId        String?
-  riskLevel         RiskLevel?
-  score             Float?       // 0-100 for risk scores
-  title             String
-  description       String
-  recommendation    String?
-  metadata          Json?        // Additional context data
-  confidence        Float        // 0-1 confidence score
-  isActive          Boolean      @default(true)
-  acknowledgedBy    String?
-  acknowledgedAt    DateTime?
-  createdAt         DateTime     @default(now())
-  expiresAt         DateTime?    // Insights can expire
+  id             String      @id @default(cuid())
+  type           InsightType
+  employeeId     String?
+  riskLevel      RiskLevel?
+  score          Float? // 0-100 for risk scores
+  title          String
+  description    String
+  recommendation String?
+  metadata       Json? // Additional context data
+  confidence     Float // 0-1 confidence score
+  isActive       Boolean     @default(true)
+  acknowledgedBy String?
+  acknowledgedAt DateTime?
+  createdAt      DateTime    @default(now())
+  expiresAt      DateTime? // Insights can expire
 
   @@index([type])
   @@index([employeeId])
@@ -379,17 +381,17 @@ model AIInsight {
 
 // Skills Catalog
 model Skill {
-  id                String          @id @default(cuid())
-  name              String          @unique
-  category          SkillCategory
-  description       String?
-  department        String?         // Relevant department (optional)
-  isActive          Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  id          String        @id @default(cuid())
+  name        String        @unique
+  category    SkillCategory
+  description String?
+  department  String? // Relevant department (optional)
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 
   // Relations
-  employeeSkills    EmployeeSkill[]
+  employeeSkills EmployeeSkill[]
 
   @@index([category])
   @@index([department])
@@ -398,21 +400,21 @@ model Skill {
 
 // Employee Skills (proficiency tracking)
 model EmployeeSkill {
-  id                String            @id @default(cuid())
-  employeeId        String
-  skillId           String
-  level             Int               // 1-5 (Beginner to Master)
-  verified          Boolean           @default(false)   // Manager verified
-  verifiedBy        String?           // Manager who verified
-  verifiedAt        DateTime?
-  targetLevel       Int?              // Goal proficiency level
-  lastAssessed      DateTime          @default(now())
-  notes             String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  id           String    @id @default(cuid())
+  employeeId   String
+  skillId      String
+  level        Int // 1-5 (Beginner to Master)
+  verified     Boolean   @default(false) // Manager verified
+  verifiedBy   String? // Manager who verified
+  verifiedAt   DateTime?
+  targetLevel  Int? // Goal proficiency level
+  lastAssessed DateTime  @default(now())
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  skill             Skill             @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@unique([employeeId, skillId])
   @@index([employeeId])
@@ -423,15 +425,15 @@ model EmployeeSkill {
 
 // Skill Gap Analysis
 model SkillGap {
-  id                String    @id @default(cuid())
-  employeeId        String
-  roleTitle         String    // Target role
-  missingSkills     Json      // [{skillId, skillName, requiredLevel, currentLevel}]
-  trainingPlan      Json?     // Recommended courses/actions
-  priority          String    // HIGH, MEDIUM, LOW
-  status            String    // IDENTIFIED, IN_PROGRESS, CLOSED
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id            String   @id @default(cuid())
+  employeeId    String
+  roleTitle     String // Target role
+  missingSkills Json // [{skillId, skillName, requiredLevel, currentLevel}]
+  trainingPlan  Json? // Recommended courses/actions
+  priority      String // HIGH, MEDIUM, LOW
+  status        String // IDENTIFIED, IN_PROGRESS, CLOSED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([employeeId])
   @@index([status])
@@ -440,19 +442,19 @@ model SkillGap {
 
 // Performance Goals (OKRs)
 model PerformanceGoal {
-  id                String      @id @default(cuid())
-  employeeId        String
-  type              GoalType    @default(OKR)
-  status            GoalStatus  @default(DRAFT)
-  quarter           String      // e.g., "2026-Q1"
-  objective         String      // The "what" - qualitative goal
-  keyResults        Json        // [{description, target, current, unit}]
-  progress          Int         @default(0) // 0-100
-  startDate         DateTime
-  endDate           DateTime
-  createdBy         String
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id         String     @id @default(cuid())
+  employeeId String
+  type       GoalType   @default(OKR)
+  status     GoalStatus @default(DRAFT)
+  quarter    String // e.g., "2026-Q1"
+  objective  String // The "what" - qualitative goal
+  keyResults Json // [{description, target, current, unit}]
+  progress   Int        @default(0) // 0-100
+  startDate  DateTime
+  endDate    DateTime
+  createdBy  String
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
 
   @@index([employeeId])
   @@index([status])
@@ -462,19 +464,19 @@ model PerformanceGoal {
 
 // 360 Feedback Requests
 model FeedbackRequest {
-  id                String        @id @default(cuid())
-  subjectId         String        // Employee being reviewed
-  requestorId       String        // Who initiated (HR/self)
-  reviewers         Json          // [employeeIds]
-  questions         Json          // [{question, type}]
-  anonymousMode     Boolean       @default(true)
-  status            ReviewStatus  @default(PENDING)
-  dueDate           DateTime
-  completedAt       DateTime?
-  createdAt         DateTime      @default(now())
+  id            String       @id @default(cuid())
+  subjectId     String // Employee being reviewed
+  requestorId   String // Who initiated (HR/self)
+  reviewers     Json // [employeeIds]
+  questions     Json // [{question, type}]
+  anonymousMode Boolean      @default(true)
+  status        ReviewStatus @default(PENDING)
+  dueDate       DateTime
+  completedAt   DateTime?
+  createdAt     DateTime     @default(now())
 
   // Relations
-  responses         FeedbackResponse[]
+  responses FeedbackResponse[]
 
   @@index([subjectId])
   @@index([status])
@@ -483,14 +485,14 @@ model FeedbackRequest {
 
 // 360 Feedback Responses
 model FeedbackResponse {
-  id                String           @id @default(cuid())
-  requestId         String
-  reviewerId        String           // Who gave feedback
-  answers           Json             // [{question, answer, rating}]
-  submittedAt       DateTime         @default(now())
+  id          String   @id @default(cuid())
+  requestId   String
+  reviewerId  String // Who gave feedback
+  answers     Json // [{question, answer, rating}]
+  submittedAt DateTime @default(now())
 
   // Relations
-  request           FeedbackRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  request FeedbackRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
 
   @@unique([requestId, reviewerId])
   @@index([requestId])
@@ -499,20 +501,20 @@ model FeedbackResponse {
 
 // Performance Reviews
 model PerformanceReview {
-  id                String      @id @default(cuid())
-  employeeId        String
-  reviewerId        String      // Manager conducting review
-  period            String      // e.g., "2026-Q1"
-  ratings           Json        // {competency: score}
-  strengths         String?
+  id                  String       @id @default(cuid())
+  employeeId          String
+  reviewerId          String // Manager conducting review
+  period              String // e.g., "2026-Q1"
+  ratings             Json // {competency: score}
+  strengths           String?
   areasForImprovement String?
-  overallRating     Int?        // 1-5
-  comments          String?
-  status            ReviewStatus @default(IN_PROGRESS)
-  scheduledDate     DateTime?
-  completedAt       DateTime?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  overallRating       Int? // 1-5
+  comments            String?
+  status              ReviewStatus @default(IN_PROGRESS)
+  scheduledDate       DateTime?
+  completedAt         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
   @@index([employeeId])
   @@index([reviewerId])
@@ -524,14 +526,14 @@ model PerformanceReview {
 
 // Onboarding Templates
 model OnboardingTemplate {
-  id                String    @id @default(cuid())
-  department        String
-  role              String
-  tasks             Json      // [{title, assignee, dueDay, category, description}]
-  documents         Json      // Required documents
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id         String   @id @default(cuid())
+  department String
+  role       String
+  tasks      Json // [{title, assignee, dueDay, category, description}]
+  documents  Json // Required documents
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([department])
   @@index([role])
@@ -539,16 +541,16 @@ model OnboardingTemplate {
 
 // Onboarding Journeys
 model OnboardingJourney {
-  id                String    @id @default(cuid())
-  employeeId        String
-  templateId        String?
-  startDate         DateTime
-  tasks             Json      // [{...task, completed, completedAt, completedBy}]
-  progress          Int       @default(0) // 0-100
-  status            String    // ACTIVE, COMPLETED, CANCELLED
-  completedAt       DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  employeeId  String
+  templateId  String?
+  startDate   DateTime
+  tasks       Json // [{...task, completed, completedAt, completedBy}]
+  progress    Int       @default(0) // 0-100
+  status      String // ACTIVE, COMPLETED, CANCELLED
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([employeeId])
   @@index([status])
@@ -558,31 +560,31 @@ model OnboardingJourney {
 
 // Shift Templates
 model ShiftTemplate {
-  id                String    @id @default(cuid())
-  name              String
-  startTime         String    // "09:00"
-  endTime           String    // "17:00"
-  department        String?
-  requiredStaff     Int       @default(1)
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
+  id            String   @id @default(cuid())
+  name          String
+  startTime     String // "09:00"
+  endTime       String // "17:00"
+  department    String?
+  requiredStaff Int      @default(1)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
 
   @@index([department])
 }
 
 // Shifts
 model Shift {
-  id                String    @id @default(cuid())
-  templateId        String?
-  date              DateTime
-  startTime         String
-  endTime           String
-  employeeId        String?
-  department        String?
-  status            String    @default("OPEN") // OPEN, ASSIGNED, COMPLETED, CANCELLED
-  notes             String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id         String   @id @default(cuid())
+  templateId String?
+  date       DateTime
+  startTime  String
+  endTime    String
+  employeeId String?
+  department String?
+  status     String   @default("OPEN") // OPEN, ASSIGNED, COMPLETED, CANCELLED
+  notes      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([date])
   @@index([employeeId])
@@ -591,15 +593,15 @@ model Shift {
 
 // Shift Swap Requests
 model ShiftSwapRequest {
-  id                String    @id @default(cuid())
-  originalShiftId   String
-  requestorId       String
-  targetEmployeeId  String?
-  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED
-  reason            String?
-  reviewedBy        String?
-  reviewedAt        DateTime?
-  createdAt         DateTime  @default(now())
+  id               String    @id @default(cuid())
+  originalShiftId  String
+  requestorId      String
+  targetEmployeeId String?
+  status           String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  reason           String?
+  reviewedBy       String?
+  reviewedAt       DateTime?
+  createdAt        DateTime  @default(now())
 
   @@index([requestorId])
   @@index([status])
@@ -609,20 +611,20 @@ model ShiftSwapRequest {
 
 // Expense Claims
 model ExpenseClaim {
-  id                String    @id @default(cuid())
-  employeeId        String
-  category          String    // TRAVEL, MEALS, OFFICE_SUPPLIES, etc.
-  amount            Float
-  description       String
-  receiptUrl        String?
-  date              DateTime
-  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED, PAID
-  approvedBy        String?
-  approvedAt        DateTime?
-  rejectionReason   String?
-  paidAt            DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  employeeId      String
+  category        String // TRAVEL, MEALS, OFFICE_SUPPLIES, etc.
+  amount          Float
+  description     String
+  receiptUrl      String?
+  date            DateTime
+  status          String    @default("PENDING") // PENDING, APPROVED, REJECTED, PAID
+  approvedBy      String?
+  approvedAt      DateTime?
+  rejectionReason String?
+  paidAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([employeeId])
   @@index([status])
@@ -633,17 +635,17 @@ model ExpenseClaim {
 
 // Courses
 model Course {
-  id                String    @id @default(cuid())
-  title             String
-  description       String?
-  type              String    // COMPLIANCE, TECHNICAL, SOFT_SKILL, CERTIFICATION
-  duration          Int       // minutes
-  mandatory         Boolean   @default(false)
-  department        String?
-  externalUrl       String?
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  type        String // COMPLIANCE, TECHNICAL, SOFT_SKILL, CERTIFICATION
+  duration    Int // minutes
+  mandatory   Boolean  @default(false)
+  department  String?
+  externalUrl String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([type])
   @@index([mandatory])
@@ -651,16 +653,16 @@ model Course {
 
 // Employee Course Enrollment
 model EmployeeCourse {
-  id                String    @id @default(cuid())
-  employeeId        String
-  courseId          String
-  status            String    @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED
-  progress          Int       @default(0) // 0-100
-  assignedBy        String?
-  assignedAt        DateTime  @default(now())
-  startedAt         DateTime?
-  completedAt       DateTime?
-  certificateUrl    String?
+  id             String    @id @default(cuid())
+  employeeId     String
+  courseId       String
+  status         String    @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED
+  progress       Int       @default(0) // 0-100
+  assignedBy     String?
+  assignedAt     DateTime  @default(now())
+  startedAt      DateTime?
+  completedAt    DateTime?
+  certificateUrl String?
 
   @@unique([employeeId, courseId])
   @@index([employeeId])
@@ -670,15 +672,15 @@ model EmployeeCourse {
 
 // Certifications
 model Certification {
-  id                String    @id @default(cuid())
-  employeeId        String
-  name              String
-  issuedBy          String
-  issuedDate        DateTime
-  expiryDate        DateTime?
-  fileUrl           String?
-  verificationUrl   String?
-  createdAt         DateTime  @default(now())
+  id              String    @id @default(cuid())
+  employeeId      String
+  name            String
+  issuedBy        String
+  issuedDate      DateTime
+  expiryDate      DateTime?
+  fileUrl         String?
+  verificationUrl String?
+  createdAt       DateTime  @default(now())
 
   @@index([employeeId])
   @@index([expiryDate])
@@ -688,54 +690,114 @@ model Certification {
 
 // Job Postings
 model JobPosting {
-  id                String    @id @default(cuid())
-  title             String
-  department        String
-  description       String
-  requirements      Json      // Skills, experience, education
-  salaryRange       String?
-  openings          Int       @default(1)
-  status            String    @default("OPEN") // OPEN, CLOSED
-  postedBy          String
-  postedAt          DateTime  @default(now())
-  closedAt          DateTime?
+  id           String    @id @default(cuid())
+  title        String
+  department   String
+  description  String
+  requirements Json // Skills, experience, education
+  salaryRange  String?
+  openings     Int       @default(1)
+  status       String    @default("OPEN") // OPEN, CLOSED
+  postedBy     String
+  postedAt     DateTime  @default(now())
+  closedAt     DateTime?
+
+  // Relations
+  stages     RecruitmentStage[]
+  candidates Candidate[]
 
   @@index([status])
   @@index([department])
 }
 
-// Candidates
-model Candidate {
-  id                String    @id @default(cuid())
-  jobId             String
-  name              String
-  email             String
-  phone             String?
-  resumeUrl         String?
-  stage             String    @default("APPLIED") // APPLIED, SCREENING, INTERVIEW, OFFER, HIRED, REJECTED
-  rating            Int?      // 1-5
-  notes             String?
-  appliedAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+// Recruitment Pipeline Stages
+model RecruitmentStage {
+  id         String      @id @default(cuid())
+  name       String // "Applied", "Screening", "Interview", "Offer", "Hired"
+  order      Int // Position in pipeline (1, 2, 3...)
+  jobId      String
+  job        JobPosting  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidates Candidate[]
+  createdAt  DateTime    @default(now())
 
   @@index([jobId])
-  @@index([stage])
+  @@index([order])
+}
+
+// Candidates
+model Candidate {
+  id              String            @id @default(cuid())
+  name            String
+  email           String            @unique
+  phone           String?
+  resumeUrl       String?
+  linkedinUrl     String?
+  aiScore         Float? // 0-100 AI-generated fit score
+  currentStageId  String
+  currentStage    RecruitmentStage  @relation(fields: [currentStageId], references: [id])
+  jobId           String
+  job             JobPosting        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  interviews      Interview[]
+  ratings         CandidateRating[]
+  applicationDate DateTime          @default(now())
+  rejectedAt      DateTime?
+  rejectionReason String?
+
+  @@index([jobId])
+  @@index([currentStageId])
   @@index([email])
+}
+
+// Interview Scheduling
+model Interview {
+  id            String    @id @default(cuid())
+  candidateId   String
+  candidate     Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  scheduledAt   DateTime
+  duration      Int // Minutes
+  interviewerId String
+  interviewer   User      @relation(fields: [interviewerId], references: [id])
+  meetingLink   String?
+  notes         String?
+  rating        Float? // 1-5
+  status        String // "SCHEDULED", "COMPLETED", "CANCELLED"
+  createdAt     DateTime  @default(now())
+
+  @@index([candidateId])
+  @@index([interviewerId])
+  @@index([scheduledAt])
+  @@index([status])
+}
+
+// Candidate Ratings
+model CandidateRating {
+  id          String    @id @default(cuid())
+  candidateId String
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  ratedBy     String
+  rater       User      @relation(fields: [ratedBy], references: [id])
+  score       Float // 1-5
+  criteria    String // "Technical Skills", "Cultural Fit", "Communication"
+  comments    String?
+  createdAt   DateTime  @default(now())
+
+  @@index([candidateId])
+  @@index([ratedBy])
 }
 
 // === Feature 9: Employee Well-Being ===
 
 // Wellness Programs
 model WellnessProgram {
-  id                String    @id @default(cuid())
-  name              String
-  type              String    // FITNESS, MENTAL_HEALTH, FINANCIAL, SOCIAL
-  description       String?
-  startDate         DateTime
-  endDate           DateTime?
-  participants      Json?     // [employeeIds]
-  isActive          Boolean   @default(true)
-  createdAt         DateTime  @default(now())
+  id           String    @id @default(cuid())
+  name         String
+  type         String // FITNESS, MENTAL_HEALTH, FINANCIAL, SOCIAL
+  description  String?
+  startDate    DateTime
+  endDate      DateTime?
+  participants Json? // [employeeIds]
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
 
   @@index([type])
   @@index([isActive])
@@ -743,14 +805,14 @@ model WellnessProgram {
 
 // Wellness Activities
 model WellnessActivity {
-  id                String    @id @default(cuid())
-  employeeId        String
-  programId         String?
-  activityDate      DateTime
-  activityType      String    // STEPS, MEDITATION, WORKOUT, etc.
-  points            Int       @default(0)
-  notes             String?
-  createdAt         DateTime  @default(now())
+  id           String   @id @default(cuid())
+  employeeId   String
+  programId    String?
+  activityDate DateTime
+  activityType String // STEPS, MEDITATION, WORKOUT, etc.
+  points       Int      @default(0)
+  notes        String?
+  createdAt    DateTime @default(now())
 
   @@index([employeeId])
   @@index([programId])
@@ -761,15 +823,15 @@ model WellnessActivity {
 
 // Projects
 model Project {
-  id                String    @id @default(cuid())
-  name              String
-  code              String    @unique
-  department        String?
-  description       String?
-  isActive          Boolean   @default(true)
-  startDate         DateTime?
-  endDate           DateTime?
-  createdAt         DateTime  @default(now())
+  id          String    @id @default(cuid())
+  name        String
+  code        String    @unique
+  department  String?
+  description String?
+  isActive    Boolean   @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime  @default(now())
 
   @@index([code])
   @@index([isActive])
@@ -777,18 +839,18 @@ model Project {
 
 // Time Entries
 model TimeEntry {
-  id                String    @id @default(cuid())
-  employeeId        String
-  projectId         String?
-  taskDescription   String?
-  date              DateTime
-  hours             Float
-  billable          Boolean   @default(true)
-  approved          Boolean   @default(false)
-  approvedBy        String?
-  approvedAt        DateTime?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id              String    @id @default(cuid())
+  employeeId      String
+  projectId       String?
+  taskDescription String?
+  date            DateTime
+  hours           Float
+  billable        Boolean   @default(true)
+  approved        Boolean   @default(false)
+  approvedBy      String?
+  approvedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([employeeId])
   @@index([projectId])

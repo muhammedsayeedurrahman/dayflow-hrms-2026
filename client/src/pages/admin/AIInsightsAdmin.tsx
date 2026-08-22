@@ -7,10 +7,17 @@ import {
   CheckCircle,
   Eye,
   Filter,
+  X,
 } from 'lucide-react';
 import { aiInsightsAPI } from '../../services/api';
 import { RiskGauge } from '../../components/ai/RiskGauge';
 import { Badge } from '../../components/ui/Badge';
+import { ConfirmModal } from '../../components/ui';
+import { toast } from '../../store/toastStore';
+import { AdminPageLayout } from '../../components/shared/AdminPageLayout';
+import { StatsCard } from '../../components/shared/StatsCard';
+import { LoadingState } from '../../components/shared/LoadingState';
+import { EmptyState } from '../../components/shared/EmptyState';
 
 interface AIInsight {
   id: string;
@@ -46,6 +53,7 @@ const AIInsightsAdmin: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [filterRisk, setFilterRisk] = useState<string>('');
   const [filterType, setFilterType] = useState<string>('');
+  const [showGenerateConfirm, setShowGenerateConfirm] = useState(false);
 
   const fetchInsights = async () => {
     setIsLoading(true);
@@ -59,7 +67,7 @@ const AIInsightsAdmin: React.FC = () => {
       setStats(statsRes.data.data);
     } catch (error: any) {
       console.error('Failed to fetch AI insights:', error);
-      alert(error.response?.data?.error || 'Failed to fetch AI insights');
+      toast.error(error.response?.data?.error || 'Failed to fetch AI insights');
     } finally {
       setIsLoading(false);
     }
@@ -70,135 +78,125 @@ const AIInsightsAdmin: React.FC = () => {
   }, [filterRisk, filterType]);
 
   const handleGenerateInsights = async () => {
-    if (
-      !confirm(
-        'This will analyze all employees and generate new AI insights. Continue?'
-      )
-    )
-      return;
-
+    setShowGenerateConfirm(false);
     setIsGenerating(true);
     try {
       const response = await aiInsightsAPI.generateInsights();
-      alert(
+      toast.success(
         `Successfully generated ${response.data.data.insightsGenerated} insights from ${response.data.data.totalEmployeesAnalyzed} employees`
       );
       fetchInsights();
     } catch (error: any) {
       console.error('Failed to generate insights:', error);
-      alert(error.response?.data?.error || 'Failed to generate insights');
+      toast.error(error.response?.data?.error || 'Failed to generate insights');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateClick = () => {
+    if (!isGenerating) {
+      setShowGenerateConfirm(true);
     }
   };
 
   const handleAcknowledge = async (id: string) => {
     try {
       await aiInsightsAPI.acknowledgeInsight(id);
+      toast.success('Insight acknowledged successfully');
       fetchInsights();
     } catch (error: any) {
       console.error('Failed to acknowledge insight:', error);
-      alert(error.response?.data?.error || 'Failed to acknowledge insight');
+      toast.error(error.response?.data?.error || 'Failed to acknowledge insight');
     }
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-      </div>
+      <AdminPageLayout
+        title="AI Insights"
+        description="Predictive analytics and intelligent recommendations"
+        icon={Brain}
+      >
+        <LoadingState rows={1} type="stats" />
+        <div className="mt-6">
+          <LoadingState rows={3} type="card" />
+        </div>
+      </AdminPageLayout>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-start">
-        <div>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Brain className="w-6 h-6 text-indigo-600" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">AI Insights</h1>
-              <p className="text-sm text-gray-500">
-                Predictive analytics and intelligent recommendations
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <button
-          onClick={handleGenerateInsights}
-          disabled={isGenerating}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          <RefreshCw
-            className={`w-4 h-4 ${isGenerating ? 'animate-spin' : ''}`}
-          />
-          {isGenerating ? 'Generating...' : 'Generate Insights'}
-        </button>
-      </div>
+    <AdminPageLayout
+      title="AI Insights"
+      description="Predictive analytics and intelligent recommendations"
+      icon={Brain}
+      action={{
+        label: isGenerating ? 'Generating...' : 'Generate Insights',
+        onClick: handleGenerateClick,
+        icon: RefreshCw,
+      }}
+    >
 
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Total Insights</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <Brain className="w-8 h-8 text-indigo-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Average Risk Score</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {stats.averageScore.toFixed(1)}
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-orange-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">High Risk</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {stats.critical + stats.high}
-                </p>
-              </div>
-              <AlertTriangle className="w-8 h-8 text-red-600" />
-            </div>
-          </div>
-
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Acknowledged</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {stats.acknowledged}
-                </p>
-              </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
-            </div>
-          </div>
+          <StatsCard
+            label="Total Insights"
+            value={stats.total}
+            icon={Brain}
+            variant="primary"
+          />
+          <StatsCard
+            label="Average Risk Score"
+            value={stats.averageScore.toFixed(1)}
+            icon={TrendingUp}
+            variant="warning"
+          />
+          <StatsCard
+            label="High Risk"
+            value={stats.critical + stats.high}
+            icon={AlertTriangle}
+            variant="danger"
+          />
+          <StatsCard
+            label="Acknowledged"
+            value={stats.acknowledged}
+            icon={CheckCircle}
+            variant="success"
+          />
         </div>
       )}
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex items-center gap-4">
-          <Filter className="w-5 h-5 text-gray-400" />
+      <div
+        className="bg-white rounded-lg p-4 transition-all duration-200"
+        style={{
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          fontFamily: '"Fira Sans", sans-serif',
+        }}
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Filter className="w-5 h-5" style={{ color: '#1E40AF' }} />
+            <span className="text-sm font-medium text-gray-700">Filters:</span>
+          </div>
+
           <select
             value={filterRisk}
             onChange={(e) => setFilterRisk(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
+            style={{
+              fontFamily: '"Fira Sans", sans-serif',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = '#1E40AF';
+              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = '#D1D5DB';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             <option value="">All Risk Levels</option>
             <option value="CRITICAL">Critical</option>
@@ -210,7 +208,18 @@ const AIInsightsAdmin: React.FC = () => {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all cursor-pointer hover:border-blue-400"
+            style={{
+              fontFamily: '"Fira Sans", sans-serif',
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = '#1E40AF';
+              e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = '#D1D5DB';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             <option value="">All Types</option>
             <option value="ATTRITION_RISK">Attrition Risk</option>
@@ -225,8 +234,26 @@ const AIInsightsAdmin: React.FC = () => {
                 setFilterRisk('');
                 setFilterType('');
               }}
-              className="text-sm text-indigo-600 hover:text-indigo-700"
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2"
+              style={{
+                color: '#1E40AF',
+                fontFamily: '"Fira Sans", sans-serif',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = '#EFF6FF';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#1E40AF';
+                e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
+              <X className="w-4 h-4" />
               Clear Filters
             </button>
           )}
@@ -236,28 +263,20 @@ const AIInsightsAdmin: React.FC = () => {
       {/* Insights List */}
       <div className="space-y-4">
         {insights.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-12 text-center">
-            <Brain className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No Insights Available
-            </h3>
-            <p className="text-gray-500 mb-4">
-              Generate AI insights to analyze employee attrition risks and get
-              recommendations.
-            </p>
-            <button
-              onClick={handleGenerateInsights}
-              disabled={isGenerating}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-            >
-              Generate First Insights
-            </button>
-          </div>
+          <EmptyState
+            icon={Brain}
+            title="No Insights Available"
+            description="Generate AI insights to analyze employee attrition risks and get personalized recommendations for your team."
+            action={{
+              label: 'Generate First Insights',
+              onClick: () => setShowGenerateConfirm(true),
+            }}
+          />
         ) : (
           insights.map((insight) => (
             <div
               key={insight.id}
-              className={`bg-white rounded-lg shadow p-6 border-l-4 ${
+              className={`bg-white rounded-lg p-6 border-l-4 transition-all duration-200 cursor-pointer ${
                 insight.riskLevel === 'CRITICAL'
                   ? 'border-red-500'
                   : insight.riskLevel === 'HIGH'
@@ -266,6 +285,18 @@ const AIInsightsAdmin: React.FC = () => {
                   ? 'border-yellow-500'
                   : 'border-green-500'
               }`}
+              style={{
+                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                fontFamily: '"Fira Sans", sans-serif',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 10px 15px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
               <div className="flex gap-6">
                 {/* Risk Gauge */}
@@ -279,11 +310,14 @@ const AIInsightsAdmin: React.FC = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3
+                        className="text-lg font-semibold text-gray-900"
+                        style={{ fontFamily: '"Fira Code", monospace' }}
+                      >
                         {insight.title}
                       </h3>
                       <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="indigo">{insight.type.replace(/_/g, ' ')}</Badge>
+                        <Badge variant="blue">{insight.type.replace(/_/g, ' ')}</Badge>
                         <span className="text-xs text-gray-500">
                           {new Date(insight.createdAt).toLocaleDateString()}
                         </span>
@@ -296,7 +330,24 @@ const AIInsightsAdmin: React.FC = () => {
                     {!insight.acknowledgedBy && (
                       <button
                         onClick={() => handleAcknowledge(insight.id)}
-                        className="flex items-center gap-1 px-3 py-1.5 text-sm text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                        className="flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg transition-all duration-200 cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        style={{
+                          color: '#1E40AF',
+                          fontFamily: '"Fira Sans", sans-serif',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = '#EFF6FF';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = '#1E40AF';
+                          e.currentTarget.style.boxShadow = '0 0 0 2px rgba(30, 64, 175, 0.2)';
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
                       >
                         <Eye className="w-4 h-4" />
                         Acknowledge
@@ -307,11 +358,23 @@ const AIInsightsAdmin: React.FC = () => {
                   <p className="text-gray-600 mb-3">{insight.description}</p>
 
                   {insight.recommendation && (
-                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3 mb-3">
-                      <p className="text-sm font-medium text-indigo-900 mb-1">
+                    <div
+                      className="border rounded-lg p-3 mb-3"
+                      style={{
+                        backgroundColor: '#EFF6FF',
+                        borderColor: '#BFDBFE',
+                      }}
+                    >
+                      <p
+                        className="text-sm font-semibold mb-1"
+                        style={{
+                          color: '#1E40AF',
+                          fontFamily: '"Fira Code", monospace',
+                        }}
+                      >
                         Recommendations:
                       </p>
-                      <p className="text-sm text-indigo-700">
+                      <p className="text-sm" style={{ color: '#1E3A8A' }}>
                         {insight.recommendation}
                       </p>
                     </div>
@@ -319,14 +382,28 @@ const AIInsightsAdmin: React.FC = () => {
 
                   {insight.metadata?.factors && (
                     <div>
-                      <p className="text-xs font-medium text-gray-500 mb-2">
+                      <p
+                        className="text-xs font-medium text-gray-500 mb-2"
+                        style={{ fontFamily: '"Fira Code", monospace' }}
+                      >
                         Risk Factors:
                       </p>
                       <div className="flex flex-wrap gap-2">
                         {insight.metadata.factors.map((factor: string, idx: number) => (
                           <span
                             key={idx}
-                            className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded"
+                            className="text-xs px-2 py-1 rounded transition-colors cursor-default"
+                            style={{
+                              backgroundColor: '#F3F4F6',
+                              color: '#374151',
+                              fontFamily: '"Fira Sans", sans-serif',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#E5E7EB';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = '#F3F4F6';
+                            }}
                           >
                             {factor}
                           </span>
@@ -346,7 +423,19 @@ const AIInsightsAdmin: React.FC = () => {
           ))
         )}
       </div>
-    </div>
+
+      {/* Confirm Modal for Generate Insights */}
+      <ConfirmModal
+        isOpen={showGenerateConfirm}
+        onClose={() => setShowGenerateConfirm(false)}
+        onConfirm={handleGenerateInsights}
+        title="Generate AI Insights"
+        message="This will analyze all employees and generate new AI insights. Continue?"
+        confirmLabel="Generate"
+        cancelLabel="Cancel"
+        type="info"
+      />
+    </AdminPageLayout>
   );
 };
 export default AIInsightsAdmin;

@@ -20,6 +20,12 @@ export default {
           900: '#0c4a6e',
         },
       },
+      fontFamily: {
+        'sans': ['Fira Sans', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        'mono': ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        'heading': ['Fira Code', 'ui-monospace', 'monospace'],
+        'body': ['Fira Sans', 'ui-sans-serif', 'sans-serif'],
+      },
     },
   },
   plugins: [],

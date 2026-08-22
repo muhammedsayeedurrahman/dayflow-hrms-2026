@@ -1,7 +1,17 @@
+/* Design System Fonts: Fira Code + Fira Sans */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+
 @import "tailwindcss";
 
 @layer base {
   :root {
+    /* Design System Colors */
+    --color-primary: #1E40AF;
+    --color-secondary: #3B82F6;
+    --color-cta: #F59E0B;
+    --color-ds-background: #F8FAFC;
+    --color-text: #1E3A8A;
+
     /* Color System from Design Reference */
     --background: 210 40% 96.1%; /* #F1F5F9 */
     --foreground: 222.2 84% 4.9%; /* #0F172A */
@@ -71,9 +81,20 @@
 html, body {
   background-color: var(--bg-primary) !important;
   color: var(--text-primary) !important;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   overflow-x: hidden;
   scroll-behavior: smooth;
+}
+
+/* Typography hierarchy: Fira Code for headings, Fira Sans for body */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Fira Code', monospace;
+  font-weight: 600;
+}
+
+/* Ensure body text uses Fira Sans */
+p, span, div, button, input, textarea, select {
+  font-family: 'Fira Sans', sans-serif;
 }
 
 /* Premium Scrollbars */
@@ -177,4 +198,53 @@ html, body {
 .weekend-stripe {
   background-color: #F8FAFC !important;
   background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(226, 232, 240, 0.3) 5px, rgba(226, 232, 240, 0.3) 10px) !important;
+}
+
+/* Toast animations */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modal animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Focus states for accessibility (WCAG 2.1 AA compliance) */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #1E40AF;
+  outline-offset: 2px;
+}
+
+/* Ensure all interactive elements have visible focus states */
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+  outline: 2px solid #1E40AF;
+  outline-offset: 2px;
 }

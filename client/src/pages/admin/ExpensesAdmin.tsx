@@ -2,10 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { DollarSign, Plus, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { expenseAPI } from '../../services/api';
 import { Badge } from '../../components/ui/Badge';
+import { ConfirmModal, PromptModal } from '../../components/ui';
+import { toast } from '../../store/toastStore';
 
 const ExpensesAdmin: React.FC = () => {
   const [claims, setClaims] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [promptModalOpen, setPromptModalOpen] = useState(false);
+  const [selectedClaimId, setSelectedClaimId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -26,21 +31,31 @@ const ExpensesAdmin: React.FC = () => {
   const handleApprove = async (claimId: number) => {
     try {
       await expenseAPI.approveClaim(String(claimId));
+      toast.success('Expense claim approved successfully');
       fetchData();
     } catch (error: any) {
       console.error('Failed to approve claim:', error);
+      toast.error('Failed to approve expense claim');
     }
   };
 
-  const handleReject = async (claimId: number) => {
+  const handleReject = (claimId: number) => {
+    setSelectedClaimId(claimId);
+    setPromptModalOpen(true);
+  };
+
+  const handleRejectConfirm = async (reason: string) => {
+    if (!selectedClaimId) return;
+
     try {
-      const reason = prompt('Enter rejection reason:');
-      if (reason) {
-        await expenseAPI.rejectClaim(String(claimId), reason);
-        fetchData();
-      }
+      await expenseAPI.rejectClaim(String(selectedClaimId), reason);
+      toast.success('Expense claim rejected');
+      fetchData();
     } catch (error: any) {
       console.error('Failed to reject claim:', error);
+      toast.error('Failed to reject expense claim');
+    } finally {
+      setSelectedClaimId(null);
     }
   };
 
@@ -49,7 +64,7 @@ const ExpensesAdmin: React.FC = () => {
       PENDING: 'warning',
       APPROVED: 'success',
       REJECTED: 'danger',
-      PAID: 'indigo',
+      PAID: 'blue',
     };
     return colors[status] || 'neutral';
   };
@@ -65,7 +80,7 @@ const ExpensesAdmin: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -75,8 +90,8 @@ const ExpensesAdmin: React.FC = () => {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-indigo-600" />
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <DollarSign className="w-6 h-6 text-blue-800" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Expense Management</h1>
@@ -140,14 +155,14 @@ const ExpensesAdmin: React.FC = () => {
                     <div className="flex gap-2 mt-3 pt-3 border-t border-gray-200">
                       <button
                         onClick={() => handleApprove(claim.id)}
-                        className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
+                        className="flex items-center gap-1 px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 text-sm cursor-pointer"
                       >
                         <CheckCircle className="w-4 h-4" />
                         Approve
                       </button>
                       <button
                         onClick={() => handleReject(claim.id)}
-                        className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                        className="flex items-center gap-1 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm cursor-pointer"
                       >
                         <XCircle className="w-4 h-4" />
                         Reject
@@ -160,6 +175,21 @@ const ExpensesAdmin: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      <PromptModal
+        isOpen={promptModalOpen}
+        onClose={() => {
+          setPromptModalOpen(false);
+          setSelectedClaimId(null);
+        }}
+        onSubmit={handleRejectConfirm}
+        title="Reject Expense Claim"
+        message="Please provide a reason for rejecting this expense claim:"
+        placeholder="Enter rejection reason..."
+        submitLabel="Reject"
+        cancelLabel="Cancel"
+      />
     </div>
   );
 };

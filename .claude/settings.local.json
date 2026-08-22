@@ -19,7 +19,13 @@
       "Bash(__NEW_LINE_a8cccf8f6ada9b0f__ echo \"=== Get All Employees ===\")",
       "Bash(ls:*)",
       "Bash(gh search:*)",
-      "Bash(server/prisma/schema.prisma:*)"
+      "Bash(server/prisma/schema.prisma:*)",
+      "Bash(python3:*)",
+      "Bash(test:*)",
+      "Bash(grep:*)",
+      "Bash(tee:*)",
+      "Bash(find:*)",
+      "Bash(npx prisma format:*)"
     ]
   }
 }

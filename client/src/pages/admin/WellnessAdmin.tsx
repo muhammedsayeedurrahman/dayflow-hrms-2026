@@ -26,7 +26,7 @@ const WellnessAdmin: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -36,8 +36,8 @@ const WellnessAdmin: React.FC = () => {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Heart className="w-6 h-6 text-indigo-600" />
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Heart className="w-6 h-6 text-blue-800" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Employee Well-Being</h1>
@@ -47,7 +47,7 @@ const WellnessAdmin: React.FC = () => {
             </div>
           </div>
         </div>
-        <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        <button className="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 cursor-pointer">
           <Plus className="w-4 h-4 inline mr-2" />
           Create Program
         </button>
@@ -66,13 +66,13 @@ const WellnessAdmin: React.FC = () => {
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm text-gray-500">Participation</p>
-          <p className="text-2xl font-bold text-indigo-600">
+          <p className="text-2xl font-bold text-blue-800">
             {programs.reduce((acc, p) => acc + (p.participantCount || 0), 0)}
           </p>
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm text-gray-500">Activities Logged</p>
-          <p className="text-2xl font-bold text-indigo-600">
+          <p className="text-2xl font-bold text-blue-800">
             {programs.reduce((acc, p) => acc + (p.activityCount || 0), 0)}
           </p>
         </div>

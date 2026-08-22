@@ -116,7 +116,7 @@ export const EmployeeList: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -134,7 +134,7 @@ export const EmployeeList: React.FC = () => {
 
         <button
           onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all"
+          className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs shadow-lg shadow-blue-800/30 transition-all"
         >
           <Plus className="h-4 w-4" />
           <span>Add New Employee</span>
@@ -151,14 +151,14 @@ export const EmployeeList: React.FC = () => {
               placeholder="Search by name, ID, or title..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full pl-9 pr-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 font-medium focus:ring-2 focus:ring-blue-800 focus:outline-none"
             />
           </div>
 
           <select
             value={deptFilter}
             onChange={(e) => setDeptFilter(e.target.value)}
-            className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+            className="px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-blue-800 focus:outline-none"
           >
             <option value="ALL">All Departments</option>
             <option value="Engineering">Engineering</option>
@@ -191,7 +191,7 @@ export const EmployeeList: React.FC = () => {
                   />
                   <div className="truncate">
                     <h4 className="font-bold text-slate-900 text-sm truncate">{emp.fullName}</h4>
-                    <p className="text-xs text-indigo-600 font-medium truncate">{emp.designation || 'Staff'}</p>
+                    <p className="text-xs text-blue-800 font-medium truncate">{emp.designation || 'Staff'}</p>
                     <span className="text-[10px] font-mono text-slate-400">{emp.user?.employeeId}</span>
                   </div>
                 </div>
@@ -213,7 +213,7 @@ export const EmployeeList: React.FC = () => {
                   </Badge>
                   <button
                     onClick={() => setSelectedEmp(emp)}
-                    className="flex items-center space-x-1 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                    className="flex items-center space-x-1 text-xs font-bold text-blue-800 hover:text-blue-900"
                   >
                     <Eye className="h-3.5 w-3.5" />
                     <span>View Details</span>
@@ -238,7 +238,7 @@ export const EmployeeList: React.FC = () => {
               <img src={selectedEmp.profilePicture || defaultAvatar} alt={selectedEmp.fullName} className="h-16 w-16 rounded-2xl object-cover" />
               <div>
                 <h4 className="font-bold text-sm text-slate-900">{selectedEmp.fullName}</h4>
-                <p className="text-indigo-600 font-semibold">{selectedEmp.designation || 'Staff'}</p>
+                <p className="text-blue-800 font-semibold">{selectedEmp.designation || 'Staff'}</p>
                 <p className="text-slate-500">{selectedEmp.department || 'Operations'} • Joined: {formatDisplayDate(selectedEmp.joiningDate)}</p>
               </div>
             </div>
@@ -259,9 +259,9 @@ export const EmployeeList: React.FC = () => {
             </div>
 
             {getEmpPayroll(selectedEmp.id) ? (
-              <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-2">
-                <span className="font-bold text-indigo-900 uppercase text-[10px]">Salary Compensation</span>
-                <div className="flex justify-between font-semibold text-indigo-950">
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 space-y-2">
+                <span className="font-bold text-blue-900 uppercase text-[10px]">Salary Compensation</span>
+                <div className="flex justify-between font-semibold text-blue-950">
                   <span>Gross Monthly: ₹{getEmpPayroll(selectedEmp.id).grossSalary.toLocaleString('en-IN')}</span>
                   <span>Net Monthly: ₹{getEmpPayroll(selectedEmp.id).netSalary.toLocaleString('en-IN')}</span>
                 </div>
@@ -293,7 +293,7 @@ export const EmployeeList: React.FC = () => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Priya Sharma"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-blue-800 focus:outline-none"
             />
           </div>
 
@@ -307,7 +307,7 @@ export const EmployeeList: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="priya.s@dayflow.demo"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-blue-800 focus:outline-none"
             />
           </div>
 
@@ -341,7 +341,7 @@ export const EmployeeList: React.FC = () => {
                 value={designation}
                 onChange={(e) => setDesignation(e.target.value)}
                 placeholder="e.g. QA Engineer"
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-blue-800 focus:outline-none"
               />
             </div>
           </div>
@@ -370,7 +370,7 @@ export const EmployeeList: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitLoading}
-              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md disabled:opacity-50"
+              className="px-5 py-2 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs shadow-md disabled:opacity-50"
             >
               {isSubmitLoading ? 'Onboarding...' : 'Add Employee'}
             </button>

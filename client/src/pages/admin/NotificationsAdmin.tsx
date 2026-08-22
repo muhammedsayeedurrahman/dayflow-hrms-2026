@@ -54,7 +54,7 @@ export const NotificationsAdmin: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -92,7 +92,7 @@ export const NotificationsAdmin: React.FC = () => {
                   value={announcementTitle}
                   onChange={(e) => setAnnouncementTitle(e.target.value)}
                   placeholder="e.g. Q3 Town Hall Schedule"
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border rounded-xl font-medium focus:ring-2 focus:ring-blue-800 focus:outline-none"
                 />
               </div>
 
@@ -106,14 +106,14 @@ export const NotificationsAdmin: React.FC = () => {
                   value={announcementMessage}
                   onChange={(e) => setAnnouncementMessage(e.target.value)}
                   placeholder="Type broadcast message..."
-                  className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                  className="w-full px-3.5 py-2 bg-slate-50 border rounded-xl font-medium focus:ring-2 focus:ring-blue-800 focus:outline-none"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitLoading}
-                className="w-full flex justify-center items-center space-x-2 py-3 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md shadow-indigo-600/30 transition-all disabled:opacity-50"
+                className="w-full flex justify-center items-center space-x-2 py-3 px-4 rounded-xl bg-blue-800 hover:bg-blue-900 text-white font-bold text-xs shadow-md shadow-blue-800/30 transition-all disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
                 <span>{isSubmitLoading ? 'Broadcasting...' : 'Send Broadcast Alert'}</span>

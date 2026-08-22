@@ -27,7 +27,7 @@ const OnboardingAdmin: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-800"></div>
       </div>
     );
   }
@@ -37,8 +37,8 @@ const OnboardingAdmin: React.FC = () => {
       <div className="flex justify-between items-start">
         <div>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Users className="w-6 h-6 text-indigo-600" />
+            <div className="p-2 bg-blue-50 rounded-lg">
+              <Users className="w-6 h-6 text-blue-800" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Onboarding Management</h1>
@@ -48,7 +48,7 @@ const OnboardingAdmin: React.FC = () => {
             </div>
           </div>
         </div>
-        <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+        <button className="px-4 py-2 bg-blue-800 text-white rounded-lg hover:bg-blue-900 cursor-pointer">
           <Plus className="w-4 h-4 inline mr-2" />
           Start Journey
         </button>
@@ -69,7 +69,7 @@ const OnboardingAdmin: React.FC = () => {
         </div>
         <div className="bg-white rounded-lg shadow p-6">
           <p className="text-sm text-gray-500">Avg Completion</p>
-          <p className="text-2xl font-bold text-indigo-600">
+          <p className="text-2xl font-bold text-blue-800">
             {journeys.length > 0
               ? Math.round(
                   journeys.reduce((acc, j) => acc + j.completionPercentage, 0) /
@@ -123,7 +123,7 @@ const OnboardingAdmin: React.FC = () => {
                   </div>
                   <div className="bg-gray-100 rounded-full h-2">
                     <div
-                      className="bg-indigo-600 h-2 rounded-full transition-all"
+                      className="bg-blue-800 h-2 rounded-full transition-all"
                       style={{ width: `${journey.completionPercentage}%` }}
                     />
                   </div>
