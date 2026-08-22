@@ -11,7 +11,6 @@ const signUpSchema = z.object({
   employeeId: z.string().min(1, 'Employee ID is required'),
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
-  role: z.enum(['EMPLOYEE', 'HR', 'ADMIN']).default('EMPLOYEE'),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
 });
@@ -61,7 +60,9 @@ export const signUp = async (
           employeeId: validatedData.employeeId,
           email: validatedData.email,
           password: hashedPassword,
-          role: validatedData.role,
+          // Privileged roles are provisioned by an authorized administrator,
+          // never selected from an unauthenticated public request.
+          role: 'EMPLOYEE',
         },
       });
 
