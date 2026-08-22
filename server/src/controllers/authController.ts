@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import { hashPassword, comparePassword, validatePasswordStrength } from '../utils/password';
 import { generateToken } from '../utils/jwt';
@@ -53,7 +54,7 @@ export const signUp = async (
     const hashedPassword = await hashPassword(validatedData.password);
 
     // Create user and employee in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       // Create user
       const user = await tx.user.create({
         data: {
