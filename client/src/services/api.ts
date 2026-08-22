@@ -54,6 +54,7 @@ export const employeeAPI = {
 export const attendanceAPI = {
   checkIn: () => api.post('/attendance/check-in'),
   checkOut: () => api.post('/attendance/check-out'),
+  getTodayStatus: () => api.get('/attendance/today'),
   getMyAttendance: (startDate?: string, endDate?: string) =>
     api.get('/attendance/me', { params: { startDate, endDate } }),
   getAllAttendance: (employeeId?: string) =>
