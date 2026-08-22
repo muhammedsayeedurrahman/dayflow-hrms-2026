@@ -1,34 +1,66 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CheckCircle2, XCircle, Clock, Search, MessageSquare } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { useHRMSStore } from '../../store/hrmsStore';
-import { LeaveRequest } from '../../types';
+import { leaveAPI } from '../../services/api';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
+import { formatDisplayDate } from '../../utils/format';
 
 export const LeaveAdmin: React.FC = () => {
   const { user } = useAuthStore();
-  const { leaveRequests, approveLeaveRequest, rejectLeaveRequest } = useHRMSStore();
-  const [activeTab, setActiveTab] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
-  const [selectedReq, setSelectedReq] = useState<LeaveRequest | null>(null);
+  const [activeTab, setActiveTab] = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
+  const [selectedReq, setSelectedReq] = useState<any | null>(null);
   const [hrComment, setHrComment] = useState('');
+
+  const fetchLeaves = async () => {
+    setIsLoading(true);
+    try {
+      const response = await leaveAPI.getAllLeaves();
+      setLeaveRequests(response.data.data);
+    } catch (err) {
+      console.error('Failed to load leave requests:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaves();
+  }, []);
+
+  const handleAction = async (action: 'APPROVE' | 'REJECT') => {
+    if (!selectedReq) return;
+    setIsActionLoading(true);
+
+    try {
+      const status = action === 'APPROVE' ? 'APPROVED' : 'REJECTED';
+      const comments = hrComment || `${action === 'APPROVE' ? 'Approved' : 'Rejected'} by HR Lead`;
+      
+      await leaveAPI.updateLeaveStatus(selectedReq.id, status, comments);
+
+      setSelectedReq(null);
+      setHrComment('');
+      await fetchLeaves();
+    } catch (err: any) {
+      alert(err.message || 'Action failed');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
 
   const filteredRequests = leaveRequests.filter((l) => l.status === activeTab);
 
-  const handleAction = (action: 'APPROVE' | 'REJECT') => {
-    if (!selectedReq) return;
-    const hrName = user?.fullName || 'Sarah Jenkins (HR Lead)';
-
-    if (action === 'APPROVE') {
-      approveLeaveRequest(selectedReq.id, hrComment || 'Approved by HR Lead', hrName);
-    } else {
-      rejectLeaveRequest(selectedReq.id, hrComment || 'Rejected by HR Lead', hrName);
-    }
-
-    setSelectedReq(null);
-    setHrComment('');
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 font-sans">
@@ -99,14 +131,16 @@ export const LeaveAdmin: React.FC = () => {
               ) : (
                 filteredRequests.map((req) => (
                   <tr key={req.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{req.employeeName}</td>
-                    <td className="py-3.5 px-4">{req.department}</td>
+                    <td className="py-3.5 px-4 font-bold text-slate-900">
+                      {req.employee?.fullName || `${req.employee?.firstName} ${req.employee?.lastName}`}
+                    </td>
+                    <td className="py-3.5 px-4">{req.employee?.department}</td>
                     <td className="py-3.5 px-4 font-semibold text-slate-800">{req.leaveType}</td>
                     <td className="py-3.5 px-4">
-                      {req.startDate} to {req.endDate}
+                      {formatDisplayDate(req.startDate)} to {formatDisplayDate(req.endDate)}
                     </td>
                     <td className="py-3.5 px-4 font-semibold">{req.totalDays} days</td>
-                    <td className="py-3.5 px-4 max-w-xs truncate">{req.reason}</td>
+                    <td className="py-3.5 px-4 max-w-xs truncate">{req.reason || req.remarks}</td>
                     <td className="py-3.5 px-4">
                       <button
                         onClick={() => setSelectedReq(req)}
@@ -128,8 +162,8 @@ export const LeaveAdmin: React.FC = () => {
         <Modal
           isOpen={!!selectedReq}
           onClose={() => setSelectedReq(null)}
-          title={`Review Leave — ${selectedReq.employeeName}`}
-          subtitle={`Department: ${selectedReq.department}`}
+          title={`Review Leave — ${selectedReq.employee?.fullName || 'Employee'}`}
+          subtitle={`Department: ${selectedReq.employee?.department}`}
         >
           <div className="space-y-4 pt-2 text-xs text-slate-800">
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-2">
@@ -137,9 +171,11 @@ export const LeaveAdmin: React.FC = () => {
                 <span>{selectedReq.leaveType} Leave</span>
                 <span>{selectedReq.totalDays} Day(s)</span>
               </div>
-              <p className="text-slate-600">Dates: {selectedReq.startDate} to {selectedReq.endDate}</p>
+              <p className="text-slate-600">
+                Dates: {formatDisplayDate(selectedReq.startDate)} to {formatDisplayDate(selectedReq.endDate)}
+              </p>
               <p className="text-slate-700 italic bg-white p-2.5 rounded-xl border border-slate-200">
-                "{selectedReq.reason}"
+                "{selectedReq.reason || selectedReq.remarks}"
               </p>
             </div>
 
@@ -158,16 +194,18 @@ export const LeaveAdmin: React.FC = () => {
 
             <div className="flex justify-end space-x-3 pt-3">
               <button
+                disabled={isActionLoading}
                 onClick={() => handleAction('REJECT')}
-                className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold"
+                className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold disabled:opacity-50"
               >
                 <XCircle className="h-4 w-4" />
                 <span>Reject Application</span>
               </button>
 
               <button
+                disabled={isActionLoading}
                 onClick={() => handleAction('APPROVE')}
-                className="flex items-center space-x-1.5 px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold"
+                className="flex items-center space-x-1.5 px-5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold disabled:opacity-50"
               >
                 <CheckCircle2 className="h-4 w-4" />
                 <span>Approve Leave</span>

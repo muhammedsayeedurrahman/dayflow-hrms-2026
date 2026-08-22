@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck, UserCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import { authAPI } from '../../services/api';
 
 export const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { setAuth, loginAsDemoEmployee, loginAsDemoHR } = useAuthStore();
+  const { setAuth } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,39 +14,33 @@ export const Login: React.FC = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const handleSignIn = async (emailToLogin: string, passwordToLogin: string) => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const response = await authAPI.signIn(emailToLogin, passwordToLogin);
+      const { user, token } = response.data.data;
+      setAuth(user, token);
+      localStorage.setItem('dayflow_token', token);
+      if (user.role === 'HR' || user.role === 'ADMIN') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/employee/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Invalid email or password.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
     if (!email || !password) {
       setError('Please enter both email address and password.');
       return;
     }
-
-    setIsLoading(true);
-
-    setTimeout(() => {
-      setIsLoading(false);
-
-      if (email.includes('hr') || email.includes('admin')) {
-        loginAsDemoHR();
-        navigate('/admin/dashboard');
-      } else {
-        setAuth(
-          {
-            id: 'emp-001',
-            employeeId: 'EMP-1001',
-            email: email,
-            fullName: email.split('@')[0].replace('.', ' '),
-            role: 'EMPLOYEE',
-            department: 'Engineering',
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
-          },
-          'demo-jwt-token'
-        );
-        navigate('/employee/dashboard');
-      }
-    }, 600);
+    handleSignIn(email, password);
   };
 
   return (
@@ -74,8 +69,7 @@ export const Login: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                loginAsDemoEmployee();
-                navigate('/employee/dashboard');
+                handleSignIn('employee1@dayflow.com', 'Test@123');
               }}
               className="flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold transition-all"
             >
@@ -85,8 +79,7 @@ export const Login: React.FC = () => {
             <button
               type="button"
               onClick={() => {
-                loginAsDemoHR();
-                navigate('/admin/dashboard');
+                handleSignIn('hr@dayflow.com', 'Test@123');
               }}
               className="flex items-center justify-center space-x-1.5 py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-all"
             >

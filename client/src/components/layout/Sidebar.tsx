@@ -2,16 +2,15 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
-  UserCheck,
-  CalendarDays,
-  FileText,
-  DollarSign,
-  Bell,
   Users,
-  BarChart3,
-  Sparkles,
-  LogOut,
   Clock,
+  CalendarDays,
+  DollarSign,
+  Award,
+  BarChart3,
+  Bell,
+  Settings,
+  LogOut,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -22,92 +21,72 @@ export const Sidebar: React.FC = () => {
   const employeeLinks = [
     { to: '/employee/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/employee/attendance', label: 'Attendance', icon: Clock },
-    { to: '/employee/leave', label: 'Leave Requests', icon: CalendarDays },
-    { to: '/employee/payroll', label: 'Salary / Payroll', icon: DollarSign },
-    { to: '/employee/profile', label: 'My Profile', icon: UserCheck },
-    { to: '/employee/notifications', label: 'Notifications', icon: Bell },
+    { to: '/employee/leave', label: 'Leave', icon: CalendarDays },
+    { to: '/employee/payroll', label: 'Payroll', icon: DollarSign },
+    { to: '/employee/profile', label: 'Profile', icon: Users },
+    { to: '/employee/notifications', label: 'Alerts', icon: Bell },
+    { to: '/employee/settings', label: 'Settings', icon: Settings },
   ];
 
   const hrLinks = [
-    { to: '/admin/dashboard', label: 'HR Dashboard', icon: LayoutDashboard },
+    { to: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/admin/employees', label: 'Employees', icon: Users },
-    { to: '/admin/attendance', label: 'Attendance Log', icon: Clock },
-    { to: '/admin/leave', label: 'Leave Approvals', icon: CalendarDays },
+    { to: '/admin/attendance', label: 'Attendance', icon: Clock },
+    { to: '/admin/leave', label: 'Leave', icon: CalendarDays },
     { to: '/admin/payroll', label: 'Payroll Mgmt', icon: DollarSign },
-    { to: '/admin/analytics', label: 'Analytics & Reports', icon: BarChart3 },
-    { to: '/admin/notifications', label: 'Notifications', icon: Bell },
+    { to: '/admin/performance', label: 'Performance', icon: Award },
+    { to: '/admin/analytics', label: 'Reports', icon: BarChart3 },
+    { to: '/admin/notifications', label: 'Alerts', icon: Bell },
+    { to: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
   const navLinks = isHR ? hrLinks : employeeLinks;
 
   return (
-    <aside className="hidden md:flex w-64 flex-col fixed inset-y-0 z-30 bg-slate-900 text-slate-300 border-r border-slate-800 shadow-xl">
+    <aside className="hidden md:flex w-20 flex-col fixed inset-y-4 left-4 z-30 bg-white border border-slate-200 shadow-lg rounded-2xl p-3 items-center justify-between">
       {/* Brand Header */}
-      <div className="flex h-16 items-center px-6 border-b border-slate-800/80 bg-slate-950/40">
-        <div className="flex items-center space-x-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 text-white font-bold text-lg shadow-md">
-            D
-          </div>
-          <div>
-            <span className="text-lg font-bold tracking-tight text-white">Dayflow</span>
-            <span className="block text-[10px] font-medium text-indigo-400 tracking-wider uppercase">HRMS Enterprise</span>
-          </div>
-        </div>
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white font-black text-xl shadow-md shadow-blue-600/25">
+        D
       </div>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
-        <div>
-          <div className="px-3 mb-2 text-[11px] font-semibold tracking-wider text-slate-500 uppercase">
-            {isHR ? 'HR Administration' : 'Employee Portal'}
-          </div>
-          <nav className="space-y-1">
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              return (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                      isActive
-                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                        : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-200'
-                    }`
-                  }
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{link.label}</span>
-                </NavLink>
-              );
-            })}
-          </nav>
-        </div>
-      </div>
+      {/* Navigation Icons Group */}
+      <nav className="flex-1 flex flex-col space-y-2 mt-8 w-full items-center overflow-y-auto py-2">
+        {navLinks.map((link) => {
+          const Icon = link.icon;
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              title={link.label}
+              className={({ isActive }) =>
+                `flex flex-col items-center justify-center p-2.5 rounded-xl transition-all duration-300 w-12 h-12 group relative ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700 dark:hover:bg-slate-800'
+                }`
+              }
+            >
+              <Icon className="h-5 w-5 transition-transform group-hover:scale-110" />
+              {/* Tooltip */}
+              <span className="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-semibold rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-md pointer-events-none z-50">
+                {link.label}
+              </span>
+            </NavLink>
+          );
+        })}
+      </nav>
 
-      {/* Footer User Info & Logout */}
-      <div className="p-4 border-t border-slate-800/80 bg-slate-950/40">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3 min-w-0">
-            <img
-              src={user?.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256'}
-              alt={user?.fullName}
-              className="h-9 w-9 rounded-full object-cover border border-slate-700"
-            />
-            <div className="truncate">
-              <span className="block text-xs font-semibold text-white truncate">{user?.fullName}</span>
-              <span className="block text-[10px] text-slate-400 truncate">{user?.role} Portal</span>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            title="Log out"
-            className="p-1.5 rounded-lg text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
+      {/* Footer Settings & Logout */}
+      <div className="flex flex-col items-center space-y-3 pt-3 border-t border-slate-100 w-full">
+        <button
+          onClick={logout}
+          title="Sign Out"
+          className="flex items-center justify-center w-12 h-12 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-all cursor-pointer"
+        >
+          <LogOut className="h-5 w-5" />
+        </button>
       </div>
     </aside>
   );
 };
+export default Sidebar;

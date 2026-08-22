@@ -48,6 +48,7 @@ export const employeeAPI = {
   updateProfile: (data: any) => api.put('/employees/profile', data),
   getAllEmployees: () => api.get('/employees'),
   getEmployeeById: (id: string) => api.get(`/employees/${id}`),
+  updateEmployee: (id: string, data: any) => api.put(`/employees/${id}`, data),
 };
 
 // Attendance API
@@ -85,4 +86,6 @@ export const notificationAPI = {
   getMyNotifications: () => api.get('/notifications/me'),
   markAsRead: (id: string) => api.put(`/notifications/${id}/read`),
   markAllAsRead: () => api.put('/notifications/read-all'),
+  broadcastNotification: (title: string, message: string) =>
+    api.post('/notifications/broadcast', { title, message }),
 };

@@ -1,18 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, CheckCheck, Filter, Clock, CheckCircle2 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { useHRMSStore } from '../../store/hrmsStore';
+import { notificationAPI } from '../../services/api';
+import { formatDisplayDate } from '../../utils/format';
 import { Badge } from '../../components/ui/Badge';
 
 export const NotificationsPage: React.FC = () => {
   const { user } = useAuthStore();
-  const { notifications, markNotificationAsRead, markAllNotificationsAsRead } = useHRMSStore();
-  const userId = user?.employeeId || 'EMP-1001';
-
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'ALL' | 'UNREAD'>('ALL');
 
-  const myNotifs = notifications.filter((n) => n.userId === userId || n.userId === 'ALL');
-  const filteredNotifs = filter === 'UNREAD' ? myNotifs.filter((n) => !n.isRead) : myNotifs;
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    try {
+      const response = await notificationAPI.getMyNotifications();
+      setNotifications(response.data.data);
+    } catch (err) {
+      console.error('Failed to load notifications:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await notificationAPI.markAsRead(id);
+      // Update local state to show it is read
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (err) {
+      console.error('Failed to mark notification read:', err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationAPI.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error('Failed to mark all notifications read:', err);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  const filteredNotifs = filter === 'UNREAD' ? notifications.filter((n) => !n.isRead) : notifications;
 
   return (
     <div className="space-y-8 font-sans">
@@ -24,7 +68,7 @@ export const NotificationsPage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => markAllNotificationsAsRead(userId)}
+          onClick={handleMarkAllAsRead}
           className="flex items-center space-x-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold text-xs transition-all"
         >
           <CheckCheck className="h-4 w-4 text-indigo-600" />
@@ -43,7 +87,7 @@ export const NotificationsPage: React.FC = () => {
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            All Alerts ({myNotifs.length})
+            All Alerts ({notifications.length})
           </button>
           <button
             onClick={() => setFilter('UNREAD')}
@@ -53,7 +97,7 @@ export const NotificationsPage: React.FC = () => {
                 : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Unread ({myNotifs.filter((n) => !n.isRead).length})
+            Unread ({notifications.filter((n) => !n.isRead).length})
           </button>
         </div>
 
@@ -65,7 +109,7 @@ export const NotificationsPage: React.FC = () => {
             filteredNotifs.map((n) => (
               <div
                 key={n.id}
-                onClick={() => markNotificationAsRead(n.id)}
+                onClick={() => !n.isRead && handleMarkAsRead(n.id)}
                 className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                   n.isRead
                     ? 'bg-slate-50/70 border-slate-100 text-slate-600'
@@ -80,7 +124,9 @@ export const NotificationsPage: React.FC = () => {
                       {n.type}
                     </Badge>
                   </div>
-                  <span className="text-xs text-slate-400 font-medium">{n.timestamp}</span>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {n.createdAt ? formatDisplayDate(n.createdAt) : n.timestamp}
+                  </span>
                 </div>
                 <p className="text-xs text-slate-600 mt-2 pl-5">{n.message}</p>
               </div>

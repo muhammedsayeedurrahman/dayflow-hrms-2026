@@ -37,12 +37,12 @@ export const DEMO_HR_USER: User = {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      user: DEMO_EMPLOYEE_USER, // Default to demo employee for instant preview
-      token: 'demo-jwt-token-alex-vance',
-      isAuthenticated: true,
+      user: null,
+      token: null,
+      isAuthenticated: false,
       setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
-      loginAsDemoEmployee: () => set({ user: DEMO_EMPLOYEE_USER, token: 'demo-jwt-token-alex-vance', isAuthenticated: true }),
-      loginAsDemoHR: () => set({ user: DEMO_HR_USER, token: 'demo-jwt-token-sarah-jenkins', isAuthenticated: true }),
+      loginAsDemoEmployee: () => {}, // Handled directly via API in Login.tsx
+      loginAsDemoHR: () => {}, // Handled directly via API in Login.tsx
       logout: () => set({ user: null, token: null, isAuthenticated: false }),
     }),
     {

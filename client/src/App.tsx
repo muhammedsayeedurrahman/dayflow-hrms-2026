@@ -31,6 +31,15 @@ import NotificationsAdmin from './pages/admin/NotificationsAdmin';
 function App() {
   const { user, isAuthenticated } = useAuthStore();
 
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem('dayflow_theme') || 'dark';
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <Routes>
       {/* Public Auth Routes */}

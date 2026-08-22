@@ -90,3 +90,40 @@ export const markAllAsRead = async (
     next(error);
   }
 };
+
+// Broadcast notification to all users
+export const broadcastNotification = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { title, message } = req.body;
+
+    const users = await prisma.user.findMany({
+      select: { id: true },
+    });
+
+    const notifications = await prisma.$transaction(
+      users.map((u) =>
+        prisma.notification.create({
+          data: {
+            userId: u.id,
+            type: 'SYSTEM',
+            title,
+            message,
+          },
+        })
+      )
+    );
+
+    res.json({
+      success: true,
+      message: `Broadcasted notification to all ${users.length} users successfully`,
+      data: notifications,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

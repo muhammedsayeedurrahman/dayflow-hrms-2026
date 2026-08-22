@@ -23,8 +23,6 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
   const { user, logout } = useAuthStore();
   const isHR = user?.role === 'HR' || user?.role === 'ADMIN';
 
-  if (!isOpen) return null;
-
   const employeeLinks = [
     { to: '/employee/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/employee/attendance', label: 'Attendance', icon: Clock },
@@ -47,17 +45,17 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
   const navLinks = isHR ? hrLinks : employeeLinks;
 
   return (
-    <div className="fixed inset-0 z-50 flex md:hidden">
-      <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={onClose} />
-      <div className="relative flex w-4/5 max-w-xs flex-1 flex-col bg-slate-900 p-6 text-slate-300 shadow-2xl">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+    <div className={`fixed inset-0 z-50 flex md:hidden transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      <div className="fixed inset-0 bg-slate-950/40 backdrop-blur-xs transition-opacity duration-300" onClick={onClose} />
+      <aside className={`relative flex w-4/5 max-w-xs flex-1 flex-col glass-sidebar p-6 shadow-2xl transition-transform duration-500 ease-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="flex items-center justify-between border-b pb-4 mb-6">
           <div className="flex items-center space-x-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 font-bold text-white">
               D
             </div>
-            <span className="text-base font-bold text-white">Dayflow HRMS</span>
+            <span className="text-base font-bold text-slate-900 dark:text-white">Dayflow HRMS</span>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -71,8 +69,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
                 to={link.to}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                  `flex items-center space-x-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+                    isActive ? 'bg-indigo-600 text-white shadow-md active-nav-link' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                   }`
                 }
               >
@@ -83,22 +81,22 @@ export const MobileNav: React.FC<MobileNavProps> = ({ isOpen, onClose }) => {
           })}
         </nav>
 
-        <div className="border-t border-slate-800 pt-4 mt-4 flex items-center justify-between">
-          <div className="truncate">
-            <p className="text-xs font-semibold text-white truncate">{user?.fullName}</p>
-            <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+        <div className="border-t pt-4 mt-4 flex items-center justify-between">
+          <div className="truncate text-xs">
+            <p className="font-semibold text-slate-900 dark:text-white truncate">{user?.fullName}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate">{user?.email}</p>
           </div>
           <button
             onClick={() => {
               onClose();
               logout();
             }}
-            className="p-2 text-rose-400 hover:bg-rose-500/20 rounded-lg"
+            className="p-2 text-rose-500 hover:bg-rose-500/10 rounded-lg cursor-pointer"
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
-      </div>
+      </aside>
     </div>
   );
 };

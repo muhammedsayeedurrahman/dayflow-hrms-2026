@@ -1,26 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Plus, CheckCircle2, AlertCircle, Clock, Send } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { useHRMSStore } from '../../store/hrmsStore';
-import { LeaveType } from '../../types';
+import { leaveAPI } from '../../services/api';
+import { formatTimeStr, formatDateStr, formatDisplayDate } from '../../utils/format';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 
 export const LeavePage: React.FC = () => {
   const { user } = useAuthStore();
-  const { leaveRequests, submitLeaveRequest } = useHRMSStore();
-  const empId = user?.employeeId || 'EMP-1001';
-
+  const [myRequests, setMyRequests] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [leaveType, setLeaveType] = useState<LeaveType>('PAID');
+
+  // Form State
+  const [leaveType, setLeaveType] = useState<'PAID' | 'SICK' | 'UNPAID'>('PAID');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [reason, setReason] = useState('');
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const myRequests = leaveRequests.filter((l) => l.employeeId === empId);
+  const fetchLeaves = async () => {
+    setIsLoading(true);
+    try {
+      const response = await leaveAPI.getMyLeaves();
+      setMyRequests(response.data.data);
+    } catch (err) {
+      console.error('Failed to load leaves list:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeaves();
+  }, []);
+
   const approvedRequests = myRequests.filter((l) => l.status === 'APPROVED');
-  const usedDays = approvedRequests.reduce((acc, l) => acc + l.totalDays, 0);
+  const usedPaidDays = approvedRequests.filter((r) => r.leaveType === 'PAID').reduce((acc, l) => acc + l.totalDays, 0);
+  const usedSickDays = approvedRequests.filter((r) => r.leaveType === 'SICK').reduce((acc, l) => acc + l.totalDays, 0);
 
   const calculateDays = () => {
     if (!startDate || !endDate) return 1;
@@ -31,28 +50,54 @@ export const LeavePage: React.FC = () => {
     return isNaN(diffDays) || diffDays < 1 ? 1 : diffDays;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!startDate || !endDate || !reason) return;
+    setErrorMsg('');
+    setFeedbackMsg('');
 
-    submitLeaveRequest({
-      employeeId: empId,
-      employeeName: user?.fullName || 'Alex Vance',
-      department: user?.department || 'Engineering',
-      leaveType,
-      startDate,
-      endDate,
-      totalDays: calculateDays(),
-      reason,
-    });
+    if (!startDate || !endDate || !reason) {
+      setErrorMsg('Please fill in all fields.');
+      return;
+    }
 
-    setIsModalOpen(false);
-    setReason('');
-    setStartDate('');
-    setEndDate('');
-    setFeedbackMsg('Leave request submitted successfully for HR review!');
-    setTimeout(() => setFeedbackMsg(''), 4000);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (end < start) {
+      setErrorMsg('End Date cannot be before Start Date.');
+      return;
+    }
+
+    setIsSubmitLoading(true);
+    try {
+      await leaveAPI.applyLeave({
+        leaveType,
+        startDate,
+        endDate,
+        reason,
+        remarks: reason,
+      });
+
+      setIsModalOpen(false);
+      setReason('');
+      setStartDate('');
+      setEndDate('');
+      setFeedbackMsg('Leave request submitted successfully for HR review!');
+      setTimeout(() => setFeedbackMsg(''), 5000);
+      await fetchLeaves();
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to submit leave request.');
+    } finally {
+      setIsSubmitLoading(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 font-sans">
@@ -64,7 +109,10 @@ export const LeavePage: React.FC = () => {
         </div>
 
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setErrorMsg('');
+            setIsModalOpen(true);
+          }}
           className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all"
         >
           <Plus className="h-4 w-4" />
@@ -84,13 +132,13 @@ export const LeavePage: React.FC = () => {
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Paid Leave Balance</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900">{Math.max(0, 12 - usedDays)} Days</span>
+            <span className="text-2xl font-bold text-slate-900">{Math.max(0, 12 - usedPaidDays)} Days</span>
             <span className="text-xs text-slate-400 font-medium">12 allocated</span>
           </div>
           <div className="w-full bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
             <div
               className="bg-indigo-600 h-full rounded-full transition-all"
-              style={{ width: `${(usedDays / 12) * 100}%` }}
+              style={{ width: `${Math.min(100, (usedPaidDays / 12) * 100)}%` }}
             />
           </div>
         </div>
@@ -98,19 +146,22 @@ export const LeavePage: React.FC = () => {
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Sick Leave Balance</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900">6 Days</span>
+            <span className="text-2xl font-bold text-slate-900">{Math.max(0, 6 - usedSickDays)} Days</span>
             <span className="text-xs text-slate-400 font-medium">6 allocated</span>
           </div>
           <div className="w-full bg-slate-100 h-2 rounded-full mt-3 overflow-hidden">
-            <div className="bg-emerald-500 h-full rounded-full w-0" />
+            <div
+              className="bg-emerald-500 h-full rounded-full transition-all"
+              style={{ width: `${Math.min(100, (usedSickDays / 6) * 100)}%` }}
+            />
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
-          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Unpaid / Casual</span>
+          <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">Unpaid Leave</span>
           <div className="mt-2 flex items-baseline justify-between">
-            <span className="text-2xl font-bold text-slate-900">Unlimited</span>
-            <span className="text-xs text-slate-400 font-medium">Subject to approval</span>
+            <span className="text-2xl font-bold text-slate-900">Active</span>
+            <span className="text-xs text-slate-400 font-medium">Subject to HR approval</span>
           </div>
         </div>
       </div>
@@ -128,7 +179,7 @@ export const LeavePage: React.FC = () => {
                 <th className="py-3.5 px-4">Duration</th>
                 <th className="py-3.5 px-4">Reason</th>
                 <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 rounded-r-xl">HR Comment</th>
+                <th className="py-3.5 px-4 rounded-r-xl">HR Remarks</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -143,12 +194,12 @@ export const LeavePage: React.FC = () => {
                   <tr key={req.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3.5 px-4 font-bold text-slate-900">{req.leaveType}</td>
                     <td className="py-3.5 px-4">
-                      {req.startDate} to {req.endDate}
+                      {formatDisplayDate(req.startDate)} to {formatDisplayDate(req.endDate)}
                     </td>
                     <td className="py-3.5 px-4 font-semibold text-slate-800">
                       {req.totalDays} day{req.totalDays > 1 ? 's' : ''}
                     </td>
-                    <td className="py-3.5 px-4 max-w-xs truncate text-slate-700">{req.reason}</td>
+                    <td className="py-3.5 px-4 max-w-xs truncate text-slate-700">{req.reason || req.remarks || '-'}</td>
                     <td className="py-3.5 px-4">
                       <Badge
                         variant={
@@ -162,7 +213,7 @@ export const LeavePage: React.FC = () => {
                         {req.status}
                       </Badge>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-500 italic">{req.hrComment || '-'}</td>
+                    <td className="py-3.5 px-4 text-slate-500 italic">{req.reviewComments || '-'}</td>
                   </tr>
                 ))
               )}
@@ -179,18 +230,23 @@ export const LeavePage: React.FC = () => {
         subtitle="Submit leave details for HR approval"
       >
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {errorMsg && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs font-semibold">
+              {errorMsg}
+            </div>
+          )}
+
           <div>
             <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
               Leave Category
             </label>
             <select
               value={leaveType}
-              onChange={(e) => setLeaveType(e.target.value as LeaveType)}
+              onChange={(e) => setLeaveType(e.target.value as any)}
               className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             >
               <option value="PAID">Paid Leave (Annual Allocation)</option>
               <option value="SICK">Sick Leave (Medical Emergency)</option>
-              <option value="CASUAL">Casual Leave</option>
               <option value="UNPAID">Unpaid Leave</option>
             </select>
           </div>
@@ -249,17 +305,19 @@ export const LeavePage: React.FC = () => {
           <div className="flex justify-end space-x-3 pt-3">
             <button
               type="button"
+              disabled={isSubmitLoading}
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center space-x-2 px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md shadow-indigo-600/30 hover:bg-indigo-500"
+              disabled={isSubmitLoading}
+              className="flex items-center space-x-2 px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md shadow-indigo-600/30 hover:bg-indigo-500 disabled:opacity-50"
             >
               <Send className="h-3.5 w-3.5" />
-              <span>Submit Leave Application</span>
+              <span>{isSubmitLoading ? 'Submitting...' : 'Submit Leave Application'}</span>
             </button>
           </div>
         </form>

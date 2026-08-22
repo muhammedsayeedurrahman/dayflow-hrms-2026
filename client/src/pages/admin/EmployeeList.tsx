@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
-import { Search, Plus, User, Mail, Phone, Building, Briefcase, Eye, Edit, ShieldCheck } from 'lucide-react';
-import { useHRMSStore } from '../../store/hrmsStore';
-import { Employee } from '../../types';
+import React, { useState, useEffect } from 'react';
+import { Search, Plus, User, Mail, Phone, Building, Briefcase, Eye, Lock } from 'lucide-react';
+import { employeeAPI, payrollAPI, authAPI } from '../../services/api';
+import { formatDisplayDate } from '../../utils/format';
 import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 
 export const EmployeeList: React.FC = () => {
-  const { employees, addEmployee } = useHRMSStore();
+  const [employees, setEmployees] = useState<any[]>([]);
+  const [payrolls, setPayrolls] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitLoading, setIsSubmitLoading] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
 
-  const [selectedEmp, setSelectedEmp] = useState<Employee | null>(null);
+  const [selectedEmp, setSelectedEmp] = useState<any | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   // New Employee Form State
@@ -20,53 +24,104 @@ export const EmployeeList: React.FC = () => {
   const [designation, setDesignation] = useState('Software Engineer');
   const [basicSalary, setBasicSalary] = useState(60000);
 
+  const fetchDirectoryData = async () => {
+    setIsLoading(true);
+    try {
+      const [empRes, payrollRes] = await Promise.all([
+        employeeAPI.getAllEmployees(),
+        payrollAPI.getAllPayroll().catch(() => ({ data: { data: [] } })),
+      ]);
+      setEmployees(empRes.data.data);
+      setPayrolls(payrollRes.data.data);
+    } catch (err) {
+      console.error('Failed to load employee list:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDirectoryData();
+  }, []);
+
+  const handleAddSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!fullName || !email) return;
+
+    setIsSubmitLoading(true);
+    try {
+      const generatedEmpId = `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      // 1. Sign up the user (with default password and generated employeeId)
+      await authAPI.signUp({
+        email,
+        password: 'Password123!',
+        employeeId: generatedEmpId,
+        firstName: fullName.split(' ')[0] || fullName,
+        lastName: fullName.split(' ')[1] || '',
+      });
+
+      // 2. Fetch employees to find the newly created record's DB uuid
+      const empListRes = await employeeAPI.getAllEmployees();
+      const allEmps = empListRes.data.data;
+      const newEmp = allEmps.find((e: any) => e.user?.employeeId === generatedEmpId);
+
+      if (newEmp) {
+        // 3. Update employee department, designation, and other fields
+        await employeeAPI.updateEmployee(newEmp.id, {
+          department,
+          designation,
+          phone: '+91 98765 00000',
+          address: 'Bangalore, Karnataka, India',
+        });
+
+        // 4. Create/Update payroll
+        await payrollAPI.updatePayroll(newEmp.id, {
+          basicSalary: Number(basicSalary),
+          hra: Math.round(Number(basicSalary) * 0.4),
+          transportAllowance: 1600,
+          medicalAllowance: 1250,
+          otherAllowances: Math.round(Number(basicSalary) * 0.1),
+          providentFund: Math.round(Number(basicSalary) * 0.12),
+          tax: Math.round(Number(basicSalary) * 0.08),
+        });
+      }
+
+      setIsAddModalOpen(false);
+      setFullName('');
+      setEmail('');
+      
+      // Refresh directory
+      await fetchDirectoryData();
+    } catch (err: any) {
+      alert(err.response?.data?.message || err.message || 'Failed to onboard new employee');
+    } finally {
+      setIsSubmitLoading(false);
+    }
+  };
+
+  const getEmpPayroll = (empId: string) => {
+    return payrolls.find((p) => p.employeeId === empId);
+  };
+
   const filteredEmployees = employees.filter((emp) => {
     const matchesSearch =
       emp.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.designation.toLowerCase().includes(searchTerm.toLowerCase());
+      (emp.user?.employeeId && emp.user.employeeId.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (emp.designation && emp.designation.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesDept = deptFilter === 'ALL' || emp.department === deptFilter;
     return matchesSearch && matchesDept;
   });
 
-  const handleAddSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!fullName || !email) return;
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
 
-    const newEmpId = `EMP-${Math.floor(1000 + Math.random() * 9000)}`;
-    addEmployee({
-      id: `emp-${Date.now()}`,
-      employeeId: newEmpId,
-      firstName: fullName.split(' ')[0],
-      lastName: fullName.split(' ')[1] || '',
-      fullName: fullName,
-      email: email,
-      phone: '+91 98765 00000',
-      address: 'Bangalore, Karnataka, India',
-      department,
-      designation,
-      joiningDate: new Date().toISOString().split('T')[0],
-      employmentType: 'Full-time',
-      status: 'Active',
-      managerName: 'Sarah Jenkins (HR Lead)',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
-      salary: {
-        basic: Number(basicSalary),
-        hra: Math.round(basicSalary * 0.4),
-        specialAllowance: Math.round(basicSalary * 0.25),
-        pfDeduction: Math.round(basicSalary * 0.12),
-        taxDeduction: Math.round(basicSalary * 0.08),
-        grossSalary: Math.round(basicSalary * 1.65),
-        netSalary: Math.round(basicSalary * 1.45),
-        effectiveDate: new Date().toISOString().split('T')[0],
-      },
-      documents: [],
-    });
-
-    setIsAddModalOpen(false);
-    setFullName('');
-    setEmail('');
-  };
+  const defaultAvatar = `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256`;
 
   return (
     <div className="space-y-8 font-sans">
@@ -108,7 +163,8 @@ export const EmployeeList: React.FC = () => {
             <option value="ALL">All Departments</option>
             <option value="Engineering">Engineering</option>
             <option value="Human Resources">Human Resources</option>
-            <option value="Product">Product</option>
+            <option value="Product Management">Product Management</option>
+            <option value="QA Engineering">QA Engineering</option>
             <option value="Marketing">Marketing</option>
             <option value="Finance">Finance</option>
             <option value="Sales">Sales</option>
@@ -117,47 +173,55 @@ export const EmployeeList: React.FC = () => {
 
         {/* Directory Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredEmployees.map((emp) => (
-            <div
-              key={emp.id}
-              className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs hover:shadow-md transition-all space-y-4"
-            >
-              <div className="flex items-center space-x-4">
-                <img
-                  src={emp.avatarUrl}
-                  alt={emp.fullName}
-                  className="h-14 w-14 rounded-2xl object-cover border border-slate-200 shrink-0"
-                />
-                <div className="truncate">
-                  <h4 className="font-bold text-slate-900 text-sm truncate">{emp.fullName}</h4>
-                  <p className="text-xs text-indigo-600 font-medium truncate">{emp.designation}</p>
-                  <span className="text-[10px] font-mono text-slate-400">{emp.employeeId}</span>
-                </div>
-              </div>
-
-              <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                <div className="flex items-center space-x-2">
-                  <Building className="h-3.5 w-3.5 text-slate-400" />
-                  <span>{emp.department}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="truncate">{emp.email}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <Badge variant={emp.status === 'Active' ? 'success' : 'warning'}>{emp.status}</Badge>
-                <button
-                  onClick={() => setSelectedEmp(emp)}
-                  className="flex items-center space-x-1 text-xs font-bold text-indigo-600 hover:text-indigo-700"
-                >
-                  <Eye className="h-3.5 w-3.5" />
-                  <span>View Details</span>
-                </button>
-              </div>
+          {filteredEmployees.length === 0 ? (
+            <div className="col-span-full py-8 text-center text-slate-400 text-xs">
+              No employees found matching the search filters.
             </div>
-          ))}
+          ) : (
+            filteredEmployees.map((emp) => (
+              <div
+                key={emp.id}
+                className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs hover:shadow-md transition-all space-y-4"
+              >
+                <div className="flex items-center space-x-4">
+                  <img
+                    src={emp.profilePicture || defaultAvatar}
+                    alt={emp.fullName}
+                    className="h-14 w-14 rounded-2xl object-cover border border-slate-200 shrink-0"
+                  />
+                  <div className="truncate">
+                    <h4 className="font-bold text-slate-900 text-sm truncate">{emp.fullName}</h4>
+                    <p className="text-xs text-indigo-600 font-medium truncate">{emp.designation || 'Staff'}</p>
+                    <span className="text-[10px] font-mono text-slate-400">{emp.user?.employeeId}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
+                  <div className="flex items-center space-x-2">
+                    <Building className="h-3.5 w-3.5 text-slate-400" />
+                    <span>{emp.department || 'Operations'}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Mail className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="truncate">{emp.user?.email}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <Badge variant={emp.isActive ? 'success' : 'warning'}>
+                    {emp.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                  <button
+                    onClick={() => setSelectedEmp(emp)}
+                    className="flex items-center space-x-1 text-xs font-bold text-indigo-600 hover:text-indigo-700"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>View Details</span>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -167,40 +231,46 @@ export const EmployeeList: React.FC = () => {
           isOpen={!!selectedEmp}
           onClose={() => setSelectedEmp(null)}
           title={`Employee Record — ${selectedEmp.fullName}`}
-          subtitle={`Employee ID: ${selectedEmp.employeeId}`}
+          subtitle={`Employee ID: ${selectedEmp.user?.employeeId}`}
         >
           <div className="space-y-5 pt-2 text-xs text-slate-800">
             <div className="flex items-center space-x-4 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-              <img src={selectedEmp.avatarUrl} alt={selectedEmp.fullName} className="h-16 w-16 rounded-2xl object-cover" />
+              <img src={selectedEmp.profilePicture || defaultAvatar} alt={selectedEmp.fullName} className="h-16 w-16 rounded-2xl object-cover" />
               <div>
                 <h4 className="font-bold text-sm text-slate-900">{selectedEmp.fullName}</h4>
-                <p className="text-indigo-600 font-semibold">{selectedEmp.designation}</p>
-                <p className="text-slate-500">{selectedEmp.department} • Joined: {selectedEmp.joiningDate}</p>
+                <p className="text-indigo-600 font-semibold">{selectedEmp.designation || 'Staff'}</p>
+                <p className="text-slate-500">{selectedEmp.department || 'Operations'} • Joined: {formatDisplayDate(selectedEmp.joiningDate)}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <span className="text-slate-400 block">Phone:</span>
-                <span className="font-semibold">{selectedEmp.phone}</span>
+                <span className="font-semibold">{selectedEmp.phone || '-'}</span>
               </div>
               <div>
                 <span className="text-slate-400 block">Email:</span>
-                <span className="font-semibold">{selectedEmp.email}</span>
+                <span className="font-semibold">{selectedEmp.user?.email || '-'}</span>
               </div>
               <div className="col-span-2">
                 <span className="text-slate-400 block">Address:</span>
-                <span className="font-semibold">{selectedEmp.address}</span>
+                <span className="font-semibold">{selectedEmp.address || '-'}</span>
               </div>
             </div>
 
-            <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-2">
-              <span className="font-bold text-indigo-900 uppercase text-[10px]">Salary Compensation</span>
-              <div className="flex justify-between font-semibold">
-                <span>Gross Monthly: ₹{selectedEmp.salary.grossSalary.toLocaleString('en-IN')}</span>
-                <span>Net Monthly: ₹{selectedEmp.salary.netSalary.toLocaleString('en-IN')}</span>
+            {getEmpPayroll(selectedEmp.id) ? (
+              <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 space-y-2">
+                <span className="font-bold text-indigo-900 uppercase text-[10px]">Salary Compensation</span>
+                <div className="flex justify-between font-semibold text-indigo-950">
+                  <span>Gross Monthly: ₹{getEmpPayroll(selectedEmp.id).grossSalary.toLocaleString('en-IN')}</span>
+                  <span>Net Monthly: ₹{getEmpPayroll(selectedEmp.id).netSalary.toLocaleString('en-IN')}</span>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-4 bg-slate-100 rounded-2xl border border-slate-200 text-center text-slate-500">
+                No salary compensation structure assigned yet.
+              </div>
+            )}
           </div>
         </Modal>
       )}
@@ -223,7 +293,7 @@ export const EmployeeList: React.FC = () => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               placeholder="e.g. Priya Sharma"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
@@ -237,7 +307,7 @@ export const EmployeeList: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="priya.s@dayflow.demo"
-              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500"
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
             />
           </div>
 
@@ -249,11 +319,12 @@ export const EmployeeList: React.FC = () => {
               <select
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"
               >
                 <option value="Engineering">Engineering</option>
                 <option value="Human Resources">Human Resources</option>
-                <option value="Product">Product</option>
+                <option value="Product Management">Product Management</option>
+                <option value="QA Engineering">QA Engineering</option>
                 <option value="Marketing">Marketing</option>
                 <option value="Finance">Finance</option>
                 <option value="Sales">Sales</option>
@@ -262,30 +333,46 @@ export const EmployeeList: React.FC = () => {
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                Basic Monthly Salary (₹)
+                Designation
               </label>
               <input
-                type="number"
-                value={basicSalary}
-                onChange={(e) => setBasicSalary(Number(e.target.value))}
-                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium"
+                type="text"
+                required
+                value={designation}
+                onChange={(e) => setDesignation(e.target.value)}
+                placeholder="e.g. QA Engineer"
+                className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-2 focus:ring-indigo-500 focus:outline-none"
               />
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              Basic Monthly Salary (₹)
+            </label>
+            <input
+              type="number"
+              value={basicSalary}
+              onChange={(e) => setBasicSalary(Number(e.target.value))}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none"
+            />
           </div>
 
           <div className="flex justify-end space-x-3 pt-3">
             <button
               type="button"
+              disabled={isSubmitLoading}
               onClick={() => setIsAddModalOpen(false)}
-              className="px-4 py-2 rounded-xl border text-xs font-semibold"
+              className="px-4 py-2 rounded-xl border text-xs font-semibold hover:bg-slate-50 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md"
+              disabled={isSubmitLoading}
+              className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md disabled:opacity-50"
             >
-              Add Employee
+              {isSubmitLoading ? 'Onboarding...' : 'Add Employee'}
             </button>
           </div>
         </form>

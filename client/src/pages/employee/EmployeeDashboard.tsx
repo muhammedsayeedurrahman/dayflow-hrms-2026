@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Clock,
@@ -14,35 +14,100 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { useHRMSStore } from '../../store/hrmsStore';
+import { employeeAPI, attendanceAPI, leaveAPI, payrollAPI, notificationAPI } from '../../services/api';
+import { formatTimeStr, formatDateStr, formatDisplayDate } from '../../utils/format';
 import { StatCard } from '../../components/ui/StatCard';
 import { Badge } from '../../components/ui/Badge';
 
 export const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { attendance, leaveRequests, payroll, notifications, checkIn, checkOut } = useHRMSStore();
 
-  const today = new Date().toISOString().split('T')[0];
-  const empId = user?.employeeId || 'EMP-1001';
+  const [profile, setProfile] = useState<any>(null);
+  const [todayRecord, setTodayRecord] = useState<any>(null);
+  const [myLeaves, setMyLeaves] = useState<any[]>([]);
+  const [myPayroll, setMyPayroll] = useState<any>(null);
+  const [myNotifs, setMyNotifs] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
-  // Attendance details for today
-  const todayRecord = attendance.find((a) => a.employeeId === empId && a.date === today);
-  const isCheckedIn = !!todayRecord?.checkIn && !todayRecord?.checkOut;
+  const fetchDashboardData = async () => {
+    setIsLoading(true);
+    try {
+      const [profileRes, todayRes, leavesRes, payrollRes, notifsRes] = await Promise.all([
+        employeeAPI.getProfile(),
+        attendanceAPI.getTodayStatus(),
+        leaveAPI.getMyLeaves(),
+        payrollAPI.getMyPayroll(),
+        notificationAPI.getMyNotifications(),
+      ]);
 
-  // Leave details
-  const myLeaves = leaveRequests.filter((l) => l.employeeId === empId);
+      setProfile(profileRes.data.data);
+      setTodayRecord(todayRes.data.data);
+      setMyLeaves(leavesRes.data.data);
+      setMyPayroll(payrollRes.data.data);
+      setMyNotifs(notifsRes.data.data);
+    } catch (err) {
+      console.error('Failed to load employee dashboard data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const handleCheckIn = async () => {
+    setIsActionLoading(true);
+    try {
+      await attendanceAPI.checkIn();
+      const todayRes = await attendanceAPI.getTodayStatus();
+      setTodayRecord(todayRes.data.data);
+      // Refresh notifications list to show check-in alert
+      const notifsRes = await notificationAPI.getMyNotifications();
+      setMyNotifs(notifsRes.data.data);
+    } catch (err: any) {
+      alert(err.message || 'Failed to check in');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    setIsActionLoading(true);
+    try {
+      await attendanceAPI.checkOut();
+      const todayRes = await attendanceAPI.getTodayStatus();
+      setTodayRecord(todayRes.data.data);
+      // Refresh notifications list to show check-out alert
+      const notifsRes = await notificationAPI.getMyNotifications();
+      setMyNotifs(notifsRes.data.data);
+    } catch (err: any) {
+      alert(err.message || 'Failed to check out');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  const isCheckedIn = !!todayRecord?.checkInTime && !todayRecord?.checkOutTime;
+
+  // Leave details calculations
   const pendingLeaves = myLeaves.filter((l) => l.status === 'PENDING').length;
   const approvedLeaves = myLeaves.filter((l) => l.status === 'APPROVED');
   const usedDays = approvedLeaves.reduce((acc, l) => acc + l.totalDays, 0);
   const totalBalance = Math.max(0, 18 - usedDays);
 
-  // Next Payroll
-  const myPayroll = payroll.filter((p) => p.employeeId === empId)[0];
-  const nextSalary = myPayroll ? `₹${myPayroll.netPay.toLocaleString('en-IN')}` : '₹96,000';
-
-  // Notifications
-  const myNotifs = notifications.filter((n) => n.userId === empId || n.userId === 'ALL');
+  // Next Payroll salary
+  const nextSalary = myPayroll ? `₹${myPayroll.netSalary.toLocaleString('en-IN')}` : '₹0';
 
   return (
     <div className="space-y-8 font-sans">
@@ -56,10 +121,10 @@ export const EmployeeDashboard: React.FC = () => {
               <span>Employee Portal</span>
             </div>
             <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-              Good morning, {user?.fullName || 'Alex Vance'} 👋
+              Good morning, {profile?.fullName || user?.fullName} 👋
             </h1>
             <p className="text-sm text-slate-300">
-              {user?.designation || 'Senior Frontend Engineer'} • {user?.department || 'Engineering'}
+              {profile?.designation || 'Employee'} • {profile?.department || 'Operations'}
             </p>
           </div>
 
@@ -68,24 +133,26 @@ export const EmployeeDashboard: React.FC = () => {
             <div className="text-right hidden sm:block">
               <span className="block text-xs text-slate-400 font-medium">Today's Attendance</span>
               <span className="text-sm font-bold text-white">
-                {todayRecord?.checkIn ? `In: ${todayRecord.checkIn}` : 'Not Checked In'}
+                {todayRecord?.checkInTime ? `In: ${formatTimeStr(todayRecord.checkInTime)}` : 'Not Checked In'}
               </span>
             </div>
             {isCheckedIn ? (
               <button
-                onClick={() => checkOut(empId)}
-                className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all"
+                disabled={isActionLoading}
+                onClick={handleCheckOut}
+                className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 transition-all disabled:opacity-50"
               >
                 <Clock className="h-4 w-4" />
                 <span>Check Out</span>
               </button>
             ) : (
               <button
-                onClick={() => checkIn(empId)}
-                className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all"
+                disabled={isActionLoading || (todayRecord?.checkInTime && todayRecord?.checkOutTime)}
+                onClick={handleCheckIn}
+                className="flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all disabled:opacity-50"
               >
                 <CheckCircle2 className="h-4 w-4" />
-                <span>Check In Now</span>
+                <span>{todayRecord?.checkInTime ? 'Checked Out Today' : 'Check In Now'}</span>
               </button>
             )}
           </div>
@@ -113,15 +180,15 @@ export const EmployeeDashboard: React.FC = () => {
         <StatCard
           title="Upcoming Payroll"
           value={nextSalary}
-          subtitle="Payout date: Aug 31, 2026"
+          subtitle="Payout date: Monthly End"
           icon={DollarSign}
           color="violet"
           onClick={() => navigate('/employee/payroll')}
         />
         <StatCard
           title="Monthly Work Hours"
-          value="164 hrs"
-          subtitle="Average: 8.4 hrs/day"
+          value="Calculated"
+          subtitle="Average hours tracked"
           icon={TrendingUp}
           color="blue"
           onClick={() => navigate('/employee/attendance')}
@@ -152,19 +219,19 @@ export const EmployeeDashboard: React.FC = () => {
               <div className="p-3 bg-white rounded-xl border border-slate-200/60 text-center">
                 <span className="text-xs text-slate-500 font-medium block">Check-In Time</span>
                 <span className="text-lg font-bold text-slate-900 mt-1 block">
-                  {todayRecord?.checkIn || '--:--'}
+                  {formatTimeStr(todayRecord?.checkInTime) || '--:--'}
                 </span>
               </div>
               <div className="p-3 bg-white rounded-xl border border-slate-200/60 text-center">
                 <span className="text-xs text-slate-500 font-medium block">Check-Out Time</span>
                 <span className="text-lg font-bold text-slate-900 mt-1 block">
-                  {todayRecord?.checkOut || '--:--'}
+                  {formatTimeStr(todayRecord?.checkOutTime) || '--:--'}
                 </span>
               </div>
               <div className="p-3 bg-white rounded-xl border border-slate-200/60 text-center">
                 <span className="text-xs text-slate-500 font-medium block">Logged Hours</span>
                 <span className="text-lg font-bold text-slate-900 mt-1 block">
-                  {todayRecord?.workHours ? `${todayRecord.workHours} hrs` : '0 hrs'}
+                  {todayRecord?.workHours ? `${todayRecord.workHours.toFixed(2)} hrs` : '0 hrs'}
                 </span>
               </div>
             </div>
@@ -201,11 +268,14 @@ export const EmployeeDashboard: React.FC = () => {
                         <span className="text-xs text-slate-500">({req.totalDays} day{req.totalDays > 1 ? 's' : ''})</span>
                       </div>
                       <p className="text-xs text-slate-600">
-                        {req.startDate} to {req.endDate}
+                        {formatDisplayDate(req.startDate)} to {formatDisplayDate(req.endDate)}
                       </p>
-                      {req.hrComment && (
+                      {req.remarks && (
+                        <p className="text-xs text-slate-500 italic">Reason: "{req.reason || req.remarks}"</p>
+                      )}
+                      {req.reviewComments && (
                         <p className="text-[11px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md inline-block">
-                          HR: {req.hrComment}
+                          HR: {req.reviewComments}
                         </p>
                       )}
                     </div>
@@ -261,15 +331,21 @@ export const EmployeeDashboard: React.FC = () => {
               <Bell className="h-4 w-4 text-slate-400" />
             </div>
             <div className="space-y-3">
-              {myNotifs.slice(0, 4).map((n) => (
-                <div key={n.id} className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                  <div className="flex justify-between items-center text-xs font-semibold text-slate-900">
-                    <span>{n.title}</span>
-                    <span className="text-[10px] text-slate-400 font-normal">{n.timestamp}</span>
+              {myNotifs.length === 0 ? (
+                <p className="text-xs text-slate-500 py-4 text-center">No alerts yet.</p>
+              ) : (
+                myNotifs.slice(0, 4).map((n) => (
+                  <div key={n.id} className="p-3 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
+                    <div className="flex justify-between items-center text-xs font-semibold text-slate-900">
+                      <span>{n.title}</span>
+                      <span className="text-[10px] text-slate-400 font-normal">
+                        {n.createdAt ? formatDisplayDate(n.createdAt) : n.timestamp}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-600">{n.message}</p>
                   </div>
-                  <p className="text-[11px] text-slate-600">{n.message}</p>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

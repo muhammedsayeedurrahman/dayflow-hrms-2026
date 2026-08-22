@@ -2,24 +2,26 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, ShieldCheck, CheckCircle2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { useHRMSStore } from '../../store/hrmsStore';
+import { authAPI } from '../../services/api';
 
 export const SignUp: React.FC = () => {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
-  const { addEmployee } = useHRMSStore();
 
   const [fullName, setFullName] = useState('');
   const [employeeId, setEmployeeId] = useState('EMP-' + Math.floor(1000 + Math.random() * 9000));
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'EMPLOYEE' | 'HR'>('EMPLOYEE');
   const [agreed, setAgreed] = useState(true);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     if (!fullName || !email || !password) {
       setError('Please fill in all required fields.');
       return;
@@ -33,50 +35,27 @@ export const SignUp: React.FC = () => {
       return;
     }
 
-    // Register employee in state
-    const newEmpId = `emp-${Date.now()}`;
-    addEmployee({
-      id: newEmpId,
-      employeeId: employeeId,
-      firstName: fullName.split(' ')[0],
-      lastName: fullName.split(' ')[1] || '',
-      fullName: fullName,
-      email: email,
-      phone: '+91 98000 00000',
-      address: 'Bangalore, Karnataka, India',
-      department: role === 'HR' ? 'Human Resources' : 'Engineering',
-      designation: role === 'HR' ? 'HR Specialist' : 'Software Engineer',
-      joiningDate: new Date().toISOString().split('T')[0],
-      employmentType: 'Full-time',
-      status: 'Active',
-      managerName: 'Sarah Jenkins (HR Lead)',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=256',
-      salary: {
-        basic: 50000,
-        hra: 20000,
-        specialAllowance: 15000,
-        pfDeduction: 6000,
-        taxDeduction: 4000,
-        grossSalary: 85000,
-        netSalary: 75000,
-        effectiveDate: new Date().toISOString().split('T')[0],
-      },
-      documents: [],
-    });
+    setIsLoading(true);
+    const firstName = fullName.split(' ')[0];
+    const lastName = fullName.split(' ').slice(1).join(' ') || '';
 
-    setAuth(
-      {
-        id: newEmpId,
-        employeeId: employeeId,
-        email: email,
-        fullName: fullName,
-        role: role,
-        department: role === 'HR' ? 'Human Resources' : 'Engineering',
-      },
-      'demo-jwt-token'
-    );
-
-    navigate('/verify-email');
+    try {
+      await authAPI.signUp({
+        employeeId,
+        email,
+        password,
+        firstName,
+        lastName,
+      });
+      setIsSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -111,32 +90,16 @@ export const SignUp: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Employee ID
-                </label>
-                <input
-                  type="text"
-                  value={employeeId}
-                  onChange={(e) => setEmployeeId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                  Account Role
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as 'EMPLOYEE' | 'HR')}
-                  className="w-full px-3 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-200 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                >
-                  <option value="EMPLOYEE">Employee</option>
-                  <option value="HR">HR / Admin</option>
-                </select>
-              </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
+                Employee ID
+              </label>
+              <input
+                type="text"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-950/80 border border-slate-800 rounded-xl text-slate-300 text-sm font-mono focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              />
             </div>
 
             <div>

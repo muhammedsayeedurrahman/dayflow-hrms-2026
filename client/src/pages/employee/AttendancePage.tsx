@@ -1,26 +1,77 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle2, Search, Filter, Calendar, AlertTriangle } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import { useHRMSStore } from '../../store/hrmsStore';
+import { attendanceAPI } from '../../services/api';
+import { formatTimeStr, formatDateStr, formatDisplayDate } from '../../utils/format';
 import { Badge } from '../../components/ui/Badge';
 
 export const AttendancePage: React.FC = () => {
   const { user } = useAuthStore();
-  const { attendance, checkIn, checkOut } = useHRMSStore();
-  const empId = user?.employeeId || 'EMP-1001';
+  const [todayRecord, setTodayRecord] = useState<any>(null);
+  const [attendanceList, setAttendanceList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isActionLoading, setIsActionLoading] = useState(false);
 
   const [searchDate, setSearchDate] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
 
-  const today = new Date().toISOString().split('T')[0];
-  const todayRecord = attendance.find((a) => a.employeeId === empId && a.date === today);
-  const isCheckedIn = !!todayRecord?.checkIn && !todayRecord?.checkOut;
+  const fetchAttendanceData = async () => {
+    setIsLoading(true);
+    try {
+      const [todayRes, listRes] = await Promise.all([
+        attendanceAPI.getTodayStatus(),
+        attendanceAPI.getMyAttendance(),
+      ]);
+      setTodayRecord(todayRes.data.data);
+      setAttendanceList(listRes.data.data);
+    } catch (err) {
+      console.error('Failed to load attendance logs:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  // Employee's attendance records
-  const myAttendance = attendance.filter((a) => a.employeeId === empId);
+  useEffect(() => {
+    fetchAttendanceData();
+  }, []);
 
-  const filteredAttendance = myAttendance.filter((rec) => {
-    const matchesDate = searchDate ? rec.date.includes(searchDate) : true;
+  const handleCheckIn = async () => {
+    setIsActionLoading(true);
+    try {
+      await attendanceAPI.checkIn();
+      await fetchAttendanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to check in');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const handleCheckOut = async () => {
+    setIsActionLoading(true);
+    try {
+      await attendanceAPI.checkOut();
+      await fetchAttendanceData();
+    } catch (err: any) {
+      alert(err.message || 'Failed to check out');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[50vh] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  const isCheckedIn = !!todayRecord?.checkInTime && !todayRecord?.checkOutTime;
+
+  const filteredAttendance = attendanceList.filter((rec) => {
+    const recDate = formatDateStr(rec.date);
+    const matchesDate = searchDate ? recDate.includes(searchDate) : true;
     const matchesStatus = statusFilter === 'ALL' ? true : rec.status === statusFilter;
     return matchesDate && matchesStatus;
   });
@@ -38,26 +89,27 @@ export const AttendancePage: React.FC = () => {
           <div className="text-right">
             <span className="text-xs text-slate-500 font-medium block">Today's Status</span>
             <span className="text-sm font-bold text-slate-900">
-              {isCheckedIn ? 'Checked In' : todayRecord?.checkOut ? 'Checked Out' : 'Not Checked In'}
+              {isCheckedIn ? 'Checked In' : todayRecord?.checkOutTime ? 'Checked Out' : 'Not Checked In'}
             </span>
           </div>
 
           {isCheckedIn ? (
             <button
-              onClick={() => checkOut(empId)}
-              className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition-all"
+              disabled={isActionLoading}
+              onClick={handleCheckOut}
+              className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition-all disabled:opacity-50"
             >
               <Clock className="h-4 w-4" />
               <span>Check Out</span>
             </button>
           ) : (
             <button
-              onClick={() => checkIn(empId)}
-              disabled={!!todayRecord?.checkOut}
+              disabled={isActionLoading || (todayRecord?.checkInTime && todayRecord?.checkOutTime)}
+              onClick={handleCheckIn}
               className="flex items-center space-x-2 px-6 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 text-slate-950 font-bold text-xs shadow-md transition-all"
             >
               <CheckCircle2 className="h-4 w-4" />
-              <span>{todayRecord?.checkOut ? 'Day Completed' : 'Check In'}</span>
+              <span>{todayRecord?.checkInTime ? 'Day Completed' : 'Check In'}</span>
             </button>
           )}
         </div>
@@ -102,7 +154,7 @@ export const AttendancePage: React.FC = () => {
                 <th className="py-3.5 px-4">Check-Out</th>
                 <th className="py-3.5 px-4">Duration</th>
                 <th className="py-3.5 px-4">Status</th>
-                <th className="py-3.5 px-4 rounded-r-xl">Notes</th>
+                <th className="py-3.5 px-4 rounded-r-xl">Remarks / Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -115,11 +167,11 @@ export const AttendancePage: React.FC = () => {
               ) : (
                 filteredAttendance.map((rec) => (
                   <tr key={rec.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-900">{rec.date}</td>
-                    <td className="py-3.5 px-4">{rec.checkIn || '--:--'}</td>
-                    <td className="py-3.5 px-4">{rec.checkOut || '--:--'}</td>
+                    <td className="py-3.5 px-4 font-bold text-slate-900">{formatDisplayDate(rec.date)}</td>
+                    <td className="py-3.5 px-4">{formatTimeStr(rec.checkInTime) || '--:--'}</td>
+                    <td className="py-3.5 px-4">{formatTimeStr(rec.checkOutTime) || '--:--'}</td>
                     <td className="py-3.5 px-4 font-semibold text-slate-800">
-                      {rec.workHours > 0 ? `${rec.workHours} hrs` : '--'}
+                      {rec.workHours ? `${rec.workHours.toFixed(2)} hrs` : '--'}
                     </td>
                     <td className="py-3.5 px-4">
                       <Badge
@@ -136,7 +188,7 @@ export const AttendancePage: React.FC = () => {
                         {rec.status}
                       </Badge>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-500">{rec.notes || '-'}</td>
+                    <td className="py-3.5 px-4 text-slate-500">{rec.remarks || '-'}</td>
                   </tr>
                 ))
               )}
