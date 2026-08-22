@@ -4,13 +4,13 @@ import dotenv from 'dotenv';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 
-// Routes (will be imported as we create them)
-// import authRoutes from './routes/auth';
-// import employeeRoutes from './routes/employees';
-// import attendanceRoutes from './routes/attendance';
-// import leaveRoutes from './routes/leave';
-// import payrollRoutes from './routes/payroll';
-// import notificationRoutes from './routes/notifications';
+// Routes
+import authRoutes from './routes/auth';
+import employeeRoutes from './routes/employees';
+import attendanceRoutes from './routes/attendance';
+import leaveRoutes from './routes/leave';
+import payrollRoutes from './routes/payroll';
+import notificationRoutes from './routes/notifications';
 
 dotenv.config();
 
@@ -36,12 +36,12 @@ app.get('/api/health', (req, res) => {
 });
 
 // API Routes
-// app.use('/api/auth', authRoutes);
-// app.use('/api/employees', employeeRoutes);
-// app.use('/api/attendance', attendanceRoutes);
-// app.use('/api/leave', leaveRoutes);
-// app.use('/api/payroll', payrollRoutes);
-// app.use('/api/notifications', notificationRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/employees', employeeRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/leave', leaveRoutes);
+app.use('/api/payroll', payrollRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

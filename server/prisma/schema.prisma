@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 enum Role {
@@ -117,7 +117,7 @@ model Employee {
 model Attendance {
   id                String           @id @default(cuid())
   employeeId        String
-  date              DateTime         @db.Date
+  date              DateTime
   status            AttendanceStatus @default(PRESENT)
   checkInTime       DateTime?
   checkOutTime      DateTime?
@@ -141,8 +141,8 @@ model LeaveRequest {
   employeeId        String
   leaveType         LeaveType
   status            LeaveStatus  @default(PENDING)
-  startDate         DateTime     @db.Date
-  endDate           DateTime     @db.Date
+  startDate         DateTime
+  endDate           DateTime
   totalDays         Int
   reason            String?
   remarks           String?
