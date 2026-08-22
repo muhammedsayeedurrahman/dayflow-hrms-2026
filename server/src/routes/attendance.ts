@@ -5,6 +5,7 @@ import {
   getMyAttendance,
   getAllAttendance,
   getTodayStatus,
+  getAttendanceStats,
 } from '../controllers/attendanceController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -17,6 +18,7 @@ router.get('/me', authenticate, getMyAttendance);
 router.get('/today', authenticate, getTodayStatus);
 
 // Admin/HR routes
+router.get('/stats', authenticate, authorize('HR', 'ADMIN'), getAttendanceStats);
 router.get('/', authenticate, authorize('HR', 'ADMIN'), getAllAttendance);
 
 export default router;

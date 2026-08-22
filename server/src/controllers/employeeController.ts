@@ -121,7 +121,7 @@ export const getEmployeeById = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const employee = await prisma.employee.findUnique({
       where: { id },
@@ -173,7 +173,7 @@ export const updateEmployee = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const validatedData = updateEmployeeSchema.parse(req.body);
 
     // Update fullName if firstName or lastName changed
@@ -203,5 +203,66 @@ export const updateEmployee = async (
     } else {
       next(error);
     }
+  }
+};
+
+// Get employee statistics (Admin/HR only)
+export const getEmployeeStats = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const employees = await prisma.employee.findMany({
+      include: {
+        user: {
+          select: {
+            role: true,
+          },
+        },
+      },
+    });
+
+    // Group by department
+    const departmentMap = employees.reduce((acc, emp) => {
+      const dept = emp.department || 'Unassigned';
+      if (!acc[dept]) {
+        acc[dept] = {
+          department: dept,
+          count: 0,
+          active: 0,
+        };
+      }
+      acc[dept].count++;
+      if (emp.isActive) acc[dept].active++;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const byDepartment = Object.values(departmentMap);
+
+    // Group by designation
+    const designationMap = employees.reduce((acc, emp) => {
+      const designation = emp.designation || 'Unassigned';
+      acc[designation] = (acc[designation] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const byDesignation = Object.entries(designationMap).map(([designation, count]) => ({
+      designation,
+      count,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        total: employees.length,
+        active: employees.filter((e) => e.isActive).length,
+        inactive: employees.filter((e) => !e.isActive).length,
+        byDepartment,
+        byDesignation,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };

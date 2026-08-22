@@ -86,7 +86,7 @@ export const updatePayroll = async (
   next: NextFunction
 ) => {
   try {
-    const { employeeId } = req.params;
+    const employeeId = req.params.employeeId as string;
     const validatedData = updatePayrollSchema.parse(req.body);
 
     const {
@@ -130,5 +130,94 @@ export const updatePayroll = async (
     } else {
       next(error);
     }
+  }
+};
+
+// Get payroll statistics (Admin/HR only)
+export const getPayrollStats = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const payrolls = await prisma.payroll.findMany({
+      include: {
+        employee: {
+          select: {
+            department: true,
+            designation: true,
+          },
+        },
+      },
+    });
+
+    // Calculate totals
+    const totalGrossSalary = payrolls.reduce((sum, p) => sum + p.grossSalary, 0);
+    const totalNetSalary = payrolls.reduce((sum, p) => sum + p.netSalary, 0);
+    const totalBasicSalary = payrolls.reduce((sum, p) => sum + p.basicSalary, 0);
+    const totalDeductions = payrolls.reduce(
+      (sum, p) => sum + ((p.providentFund || 0) + (p.tax || 0) + (p.otherDeductions || 0)),
+      0
+    );
+
+    // Group by department
+    const departmentMap = payrolls.reduce((acc, payroll) => {
+      const dept = payroll.employee.department || 'Unassigned';
+      if (!acc[dept]) {
+        acc[dept] = {
+          department: dept,
+          grossSalary: 0,
+          netSalary: 0,
+          count: 0,
+        };
+      }
+      acc[dept].grossSalary += payroll.grossSalary;
+      acc[dept].netSalary += payroll.netSalary;
+      acc[dept].count++;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const byDepartment = Object.values(departmentMap);
+
+    // Group by designation
+    const designationMap = payrolls.reduce((acc, payroll) => {
+      const designation = payroll.employee.designation || 'Unassigned';
+      if (!acc[designation]) {
+        acc[designation] = {
+          designation,
+          averageGross: 0,
+          averageNet: 0,
+          count: 0,
+        };
+      }
+      acc[designation].averageGross += payroll.grossSalary;
+      acc[designation].averageNet += payroll.netSalary;
+      acc[designation].count++;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const byDesignation = Object.values(designationMap).map((item: any) => ({
+      designation: item.designation,
+      averageGross: Math.round(item.averageGross / item.count),
+      averageNet: Math.round(item.averageNet / item.count),
+      count: item.count,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        totalGrossSalary,
+        totalNetSalary,
+        totalBasicSalary,
+        totalDeductions,
+        averageGrossSalary: payrolls.length > 0 ? Math.round(totalGrossSalary / payrolls.length) : 0,
+        averageNetSalary: payrolls.length > 0 ? Math.round(totalNetSalary / payrolls.length) : 0,
+        employeeCount: payrolls.length,
+        byDepartment,
+        byDesignation,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };

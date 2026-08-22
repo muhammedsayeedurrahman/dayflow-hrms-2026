@@ -5,6 +5,7 @@ import {
   getAllEmployees,
   getEmployeeById,
   updateEmployee,
+  getEmployeeStats,
 } from '../controllers/employeeController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -15,6 +16,7 @@ router.get('/profile', authenticate, getMyProfile);
 router.put('/profile', authenticate, updateMyProfile);
 
 // Admin/HR routes
+router.get('/stats', authenticate, authorize('HR', 'ADMIN'), getEmployeeStats);
 router.get('/', authenticate, authorize('HR', 'ADMIN'), getAllEmployees);
 router.get('/:id', authenticate, authorize('HR', 'ADMIN'), getEmployeeById);
 router.put('/:id', authenticate, authorize('HR', 'ADMIN'), updateEmployee);

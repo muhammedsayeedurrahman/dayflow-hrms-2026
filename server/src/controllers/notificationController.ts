@@ -34,7 +34,7 @@ export const markAsRead = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user?.id;
 
     const notification = await prisma.notification.findUnique({

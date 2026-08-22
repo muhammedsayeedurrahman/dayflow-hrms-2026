@@ -176,7 +176,7 @@ export const updateLeaveStatus = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user?.id;
     const validatedData = updateLeaveStatusSchema.parse(req.body);
 
@@ -209,21 +209,23 @@ export const updateLeaveStatus = async (
       },
     });
 
-    // Notify employee
-    await prisma.notification.create({
-      data: {
-        userId: leaveRequest.employee.user.id,
-        type:
-          validatedData.status === 'APPROVED'
-            ? 'LEAVE_APPROVED'
-            : 'LEAVE_REJECTED',
-        title: `Leave ${validatedData.status.toLowerCase()}`,
-        message: `Your ${leaveRequest.leaveType.toLowerCase()} leave request has been ${validatedData.status.toLowerCase()}${validatedData.comments ? `: ${validatedData.comments}` : ''}`,
-        metadata: {
-          leaveRequestId: leaveRequest.id,
+    // Notify employee (use leaveRequest which has the include)
+    if (leaveRequest.employee?.user) {
+      await prisma.notification.create({
+        data: {
+          userId: leaveRequest.employee.user.id,
+          type:
+            validatedData.status === 'APPROVED'
+              ? 'LEAVE_APPROVED'
+              : 'LEAVE_REJECTED',
+          title: `Leave ${validatedData.status.toLowerCase()}`,
+          message: `Your ${leaveRequest.leaveType.toLowerCase()} leave request has been ${validatedData.status.toLowerCase()}${validatedData.comments ? `: ${validatedData.comments}` : ''}`,
+          metadata: {
+            leaveRequestId: leaveRequest.id,
+          },
         },
-      },
-    });
+      });
+    }
 
     res.json({
       success: true,
@@ -236,5 +238,68 @@ export const updateLeaveStatus = async (
     } else {
       next(error);
     }
+  }
+};
+
+// Get leave statistics (Admin/HR only)
+export const getLeaveStats = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const leaves = await prisma.leaveRequest.findMany({
+      include: {
+        employee: {
+          select: {
+            department: true,
+          },
+        },
+      },
+    });
+
+    // Group by type
+    const byType = {
+      PAID: leaves.filter((l) => l.leaveType === 'PAID').length,
+      SICK: leaves.filter((l) => l.leaveType === 'SICK').length,
+      UNPAID: leaves.filter((l) => l.leaveType === 'UNPAID').length,
+    };
+
+    // Group by status
+    const byStatus = {
+      PENDING: leaves.filter((l) => l.status === 'PENDING').length,
+      APPROVED: leaves.filter((l) => l.status === 'APPROVED').length,
+      REJECTED: leaves.filter((l) => l.status === 'REJECTED').length,
+    };
+
+    // Group by department
+    const departmentMap = leaves.reduce((acc, leave) => {
+      const dept = leave.employee.department || 'Unassigned';
+      acc[dept] = (acc[dept] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const byDepartment = Object.entries(departmentMap).map(([department, count]) => ({
+      department,
+      count,
+    }));
+
+    // Calculate total days requested
+    const totalDaysRequested = leaves.reduce((sum, leave) => {
+      return sum + leave.totalDays;
+    }, 0);
+
+    res.json({
+      success: true,
+      data: {
+        byType,
+        byStatus,
+        byDepartment,
+        totalLeaves: leaves.length,
+        totalDaysRequested,
+      },
+    });
+  } catch (error) {
+    next(error);
   }
 };
