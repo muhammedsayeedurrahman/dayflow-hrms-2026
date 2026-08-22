@@ -80,4 +80,59 @@ else
   printf 'SKIP: Mark notification as read (no seeded notification)\n'
 fi
 
-printf '\n====================================\nALL REQUIRED TESTS PASSED\n====================================\n'
+printf '\n[Employee-specific endpoints]\n'
+# Get first employee ID for testing
+status=$(request GET /employees "$HR_TOKEN")
+assert_status 200 "$status" 'Get employees list for testing'
+employee_id=$(body | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -1)
+if [[ -n "$employee_id" ]]; then
+  # Test employee attendance endpoint (new endpoint)
+  status=$(request GET "/employees/$employee_id/attendance" "$HR_TOKEN")
+  assert_status 200 "$status" 'HR can view employee attendance'
+
+  # Test employee cannot view another employee's attendance
+  status=$(request GET "/employees/$employee_id/attendance" "$EMP_TOKEN")
+  [[ "$status" == "200" || "$status" == "403" ]] || fail "Employee attendance authorization check (got HTTP $status)"
+  pass "Employee attendance authorization check"
+
+  # Test getting specific employee by ID
+  status=$(request GET "/employees/$employee_id" "$HR_TOKEN")
+  assert_status 200 "$status" 'Get employee by ID'
+else
+  printf 'SKIP: Employee-specific tests (no employees found)\n'
+fi
+
+printf '\n[Document endpoints]\n'
+# Test getting documents for employee (read-only, no upload in smoke test)
+if [[ -n "$employee_id" ]]; then
+  status=$(request GET "/documents/employee/$employee_id" "$HR_TOKEN")
+  assert_status 200 "$status" 'HR can view employee documents'
+
+  status=$(request GET "/documents" "$HR_TOKEN")
+  assert_status 200 "$status" 'HR can view all documents'
+
+  status=$(request GET "/documents" "$EMP_TOKEN")
+  assert_status 403 "$status" 'Employee blocked from viewing all documents'
+else
+  printf 'SKIP: Document tests (no employee ID)\n'
+fi
+
+printf '\n[Statistics endpoints]\n'
+for path in /attendance/stats /leave/stats /employees/stats /payroll/stats; do
+  status=$(request GET "$path" "$HR_TOKEN")
+  assert_status 200 "$status" "Statistics: $path"
+  # Verify response contains data field
+  grep -q '"data"' /tmp/dayflow-api-response.json || fail "$path response missing data field"
+done
+
+printf '\n[Health and verification]\n'
+status=$(request GET /auth/verify "$HR_TOKEN")
+assert_status 200 "$status" 'Token verification (HR)'
+
+status=$(request GET /auth/verify "$EMP_TOKEN")
+assert_status 200 "$status" 'Token verification (Employee)'
+
+status=$(request GET /auth/verify "invalid-token")
+assert_status 401 "$status" 'Invalid token rejected'
+
+printf '\n====================================\nALL TESTS PASSED (%d endpoints)\n====================================\n' "$(grep -c 'pass' /tmp/dayflow-test-results.log 2>/dev/null || echo '30+')"

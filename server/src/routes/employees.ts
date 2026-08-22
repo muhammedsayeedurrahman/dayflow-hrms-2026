@@ -6,6 +6,7 @@ import {
   getEmployeeById,
   updateEmployee,
   getEmployeeStats,
+  getEmployeeAttendance,
 } from '../controllers/employeeController';
 import { authenticate, authorize } from '../middleware/auth';
 
@@ -19,6 +20,7 @@ router.put('/profile', authenticate, updateMyProfile);
 router.get('/stats', authenticate, authorize('HR', 'ADMIN'), getEmployeeStats);
 router.get('/', authenticate, authorize('HR', 'ADMIN'), getAllEmployees);
 router.get('/:id', authenticate, authorize('HR', 'ADMIN'), getEmployeeById);
+router.get('/:id/attendance', authenticate, getEmployeeAttendance);
 router.put('/:id', authenticate, authorize('HR', 'ADMIN'), updateEmployee);
 
 export default router;
