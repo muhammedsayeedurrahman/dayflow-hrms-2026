@@ -1,0 +1,287 @@
+// Dayflow HRMS Database Schema
+// Generated for Odoo x NMIT Hackathon 2026
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  EMPLOYEE
+  HR
+  ADMIN
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  HALF_DAY
+  LEAVE
+}
+
+enum LeaveType {
+  PAID
+  SICK
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  LEAVE_SUBMITTED
+  LEAVE_APPROVED
+  LEAVE_REJECTED
+  ATTENDANCE_REMINDER
+  PAYROLL_UPDATE
+  PROFILE_UPDATE
+  SYSTEM_ALERT
+}
+
+// User authentication and authorization
+model User {
+  id                String    @id @default(cuid())
+  employeeId        String    @unique
+  email             String    @unique
+  password          String
+  role              Role      @default(EMPLOYEE)
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  employee          Employee?
+  notifications     Notification[]
+
+  @@index([email])
+  @@index([employeeId])
+}
+
+// Employee profile and details
+model Employee {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+
+  // Personal Details
+  firstName         String
+  lastName          String
+  fullName          String
+  dateOfBirth       DateTime?
+  gender            String?
+  phone             String?
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  country           String?   @default("India")
+
+  // Job Details
+  designation       String?
+  department        String?
+  joiningDate       DateTime  @default(now())
+  employmentType    String?   // Full-time, Part-time, Contract
+  managerId         String?
+
+  // Profile
+  profilePicture    String?
+  bio               String?
+
+  // System
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manager           Employee? @relation("EmployeeManager", fields: [managerId], references: [id])
+  managedEmployees  Employee[] @relation("EmployeeManager")
+  attendance        Attendance[]
+  leaveRequests     LeaveRequest[]
+  payroll           Payroll?
+  documents         Document[]
+
+  @@index([userId])
+  @@index([department])
+  @@index([managerId])
+}
+
+// Attendance tracking
+model Attendance {
+  id                String           @id @default(cuid())
+  employeeId        String
+  date              DateTime         @db.Date
+  status            AttendanceStatus @default(PRESENT)
+  checkInTime       DateTime?
+  checkOutTime      DateTime?
+  workHours         Float?           // Calculated work hours
+  remarks           String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  // Relations
+  employee          Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
+  @@index([status])
+}
+
+// Leave and time-off management
+model LeaveRequest {
+  id                String       @id @default(cuid())
+  employeeId        String
+  leaveType         LeaveType
+  status            LeaveStatus  @default(PENDING)
+  startDate         DateTime     @db.Date
+  endDate           DateTime     @db.Date
+  totalDays         Int
+  reason            String?
+  remarks           String?
+
+  // Approval workflow
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  reviewComments    String?
+
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  // Relations
+  employee          Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+// Payroll and salary management
+model Payroll {
+  id                String    @id @default(cuid())
+  employeeId        String    @unique
+
+  // Salary Structure
+  basicSalary       Float
+  hra               Float?    // House Rent Allowance
+  transportAllowance Float?
+  medicalAllowance  Float?
+  otherAllowances   Float?
+
+  // Deductions
+  providentFund     Float?
+  tax               Float?
+  otherDeductions   Float?
+
+  // Calculated
+  grossSalary       Float
+  netSalary         Float
+
+  // Banking
+  bankName          String?
+  accountNumber     String?
+  ifscCode          String?
+
+  effectiveFrom     DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  employee          Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  salarySlips       SalarySlip[]
+
+  @@index([employeeId])
+}
+
+// Monthly salary slips
+model SalarySlip {
+  id                String    @id @default(cuid())
+  payrollId         String
+  month             Int       // 1-12
+  year              Int
+
+  // Salary breakdown
+  basicSalary       Float
+  allowances        Float
+  deductions        Float
+  grossSalary       Float
+  netSalary         Float
+
+  // Attendance impact
+  workingDays       Int
+  presentDays       Int
+  absentDays        Int
+  leaveDays         Int
+
+  paidDate          DateTime?
+  generatedAt       DateTime  @default(now())
+
+  // Relations
+  payroll           Payroll   @relation(fields: [payrollId], references: [id], onDelete: Cascade)
+
+  @@unique([payrollId, month, year])
+  @@index([payrollId])
+  @@index([year, month])
+}
+
+// Document management
+model Document {
+  id                String    @id @default(cuid())
+  employeeId        String
+  title             String
+  description       String?
+  fileUrl           String
+  fileType          String
+  fileSize          Int
+  uploadedAt        DateTime  @default(now())
+
+  // Relations
+  employee          Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+// Notifications system
+model Notification {
+  id                String             @id @default(cuid())
+  userId            String
+  type              NotificationType
+  title             String
+  message           String
+  isRead            Boolean            @default(false)
+  metadata          Json?              // Additional data as JSON
+  createdAt         DateTime           @default(now())
+
+  // Relations
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
+}
+
+// Activity log for audit trail
+model ActivityLog {
+  id                String    @id @default(cuid())
+  userId            String
+  action            String    // CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+  entity            String    // USER, EMPLOYEE, ATTENDANCE, LEAVE, PAYROLL
+  entityId          String?
+  details           Json?
+  ipAddress         String?
+  userAgent         String?
+  createdAt         DateTime  @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
+}
