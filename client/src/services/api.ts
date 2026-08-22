@@ -112,3 +112,110 @@ export const documentAPI = {
     api.get(`/documents/${id}/download`, { responseType: 'blob' }),
   delete: (id: string) => api.delete(`/documents/${id}`),
 };
+
+// AI Insights API
+export const aiInsightsAPI = {
+  generateInsights: () => api.post('/ai/insights/generate'),
+  getAllInsights: (type?: string, riskLevel?: string, isActive?: boolean) =>
+    api.get('/ai/insights', { params: { type, riskLevel, isActive } }),
+  getEmployeeInsights: (employeeId: string) =>
+    api.get(`/ai/insights/employee/${employeeId}`),
+  acknowledgeInsight: (id: string) => api.put(`/ai/insights/${id}/acknowledge`),
+  getAttritionStats: () => api.get('/ai/insights/attrition/stats'),
+};
+
+// Skills API
+export const skillsAPI = {
+  createSkill: (data: any) => api.post('/skills', data),
+  getAllSkills: (category?: string, department?: string) =>
+    api.get('/skills', { params: { category, department } }),
+  updateEmployeeSkills: (employeeId: string, skills: any[]) =>
+    api.put(`/skills/employee/${employeeId}`, { skills }),
+  getEmployeeSkills: (employeeId: string) => api.get(`/skills/employee/${employeeId}`),
+  getSkillsMatrix: (department?: string) =>
+    api.get('/skills/matrix', { params: { department } }),
+  analyzeSkillGaps: (employeeId: string, roleTitle: string, requiredSkills: any[]) =>
+    api.post(`/skills/employee/${employeeId}/gap-analysis`, { roleTitle, requiredSkills }),
+  getStats: () => api.get('/skills/stats'),
+};
+
+// Performance API (OKRs & 360 Feedback)
+export const performanceAPI = {
+  createGoal: (data: any) => api.post('/performance/goals', data),
+  getAllGoals: (employeeId?: string, quarter?: string) =>
+    api.get('/performance/goals', { params: { employeeId, quarter } }),
+  updateGoalProgress: (id: string, progress: number, keyResults: any[]) =>
+    api.put(`/performance/goals/${id}/progress`, { progress, keyResults }),
+  createFeedbackRequest: (data: any) => api.post('/performance/feedback/request', data),
+  submitFeedback: (requestId: string, answers: any[]) =>
+    api.post(`/performance/feedback/${requestId}/submit`, { answers }),
+  getFeedbackRequests: () => api.get('/performance/feedback/requests'),
+};
+
+// Onboarding API
+export const onboardingAPI = {
+  createTemplate: (data: any) => api.post('/onboarding/templates', data),
+  startJourney: (employeeId: string, templateId?: string) =>
+    api.post('/onboarding/journey', { employeeId, templateId }),
+  updateTask: (journeyId: string, taskIndex: number, completed: boolean) =>
+    api.put(`/onboarding/journey/${journeyId}/task/${taskIndex}`, { completed }),
+  getJourney: (employeeId: string) => api.get(`/onboarding/journey/${employeeId}`),
+};
+
+// Shift Scheduling API
+export const shiftAPI = {
+  createShift: (data: any) => api.post('/shifts', data),
+  assignShift: (id: string, employeeId: string) => api.put(`/shifts/${id}/assign`, { employeeId }),
+  getShifts: (date?: string, department?: string) =>
+    api.get('/shifts', { params: { date, department } }),
+  requestSwap: (shiftId: string, targetEmployeeId?: string, reason?: string) =>
+    api.post('/shifts/swap/request', { shiftId, targetEmployeeId, reason }),
+};
+
+// Expense Management API
+export const expenseAPI = {
+  submitClaim: (data: any) => api.post('/expenses', data),
+  getAllClaims: (status?: string) => api.get('/expenses', { params: { status } }),
+  approveClaim: (id: string) => api.put(`/expenses/${id}/approve`),
+  rejectClaim: (id: string, reason: string) =>
+    api.put(`/expenses/${id}/reject`, { reason }),
+};
+
+// Learning & Development API
+export const learningAPI = {
+  createCourse: (data: any) => api.post('/courses', data),
+  getAllCourses: () => api.get('/courses'),
+  enrollEmployee: (courseId: string, employeeId: string) =>
+    api.post('/courses/enroll', { courseId, employeeId }),
+  updateProgress: (enrollmentId: string, progress: number) =>
+    api.put(`/courses/enrollment/${enrollmentId}/progress`, { progress }),
+  getMyCourses: () => api.get('/courses/my-courses'),
+};
+
+// Recruitment API (ATS Lite)
+export const recruitmentAPI = {
+  createJob: (data: any) => api.post('/jobs', data),
+  getAllJobs: (status?: string) => api.get('/jobs', { params: { status } }),
+  getCandidates: (jobId: string, stage?: string) =>
+    api.get(`/jobs/${jobId}/candidates`, { params: { stage } }),
+  updateCandidateStage: (candidateId: string, stage: string) =>
+    api.put(`/candidates/${candidateId}/stage`, { stage }),
+};
+
+// Well-Being API
+export const wellBeingAPI = {
+  createProgram: (data: any) => api.post('/wellness/programs', data),
+  getAllPrograms: () => api.get('/wellness/programs'),
+  logActivity: (data: any) => api.post('/wellness/activity', data),
+  getMyActivities: () => api.get('/wellness/my-activities'),
+};
+
+// Time Tracking API
+export const timeTrackingAPI = {
+  createProject: (data: any) => api.post('/projects', data),
+  getAllProjects: () => api.get('/projects'),
+  logTime: (data: any) => api.post('/time-entries', data),
+  getMyTimeEntries: (startDate?: string, endDate?: string) =>
+    api.get('/time-entries/me', { params: { startDate, endDate } }),
+  approveTimeEntry: (id: string) => api.put(`/time-entries/${id}/approve`),
+};

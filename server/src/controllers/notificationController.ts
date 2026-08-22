@@ -109,7 +109,7 @@ export const broadcastNotification = async (
         prisma.notification.create({
           data: {
             userId: u.id,
-            type: 'SYSTEM',
+            type: 'SYSTEM_ALERT',
             title,
             message,
           },

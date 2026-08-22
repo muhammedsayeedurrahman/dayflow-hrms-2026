@@ -54,6 +54,60 @@ enum DocumentType {
   OTHER
 }
 
+enum InsightType {
+  ATTRITION_RISK
+  LEAVE_SUGGESTION
+  PERFORMANCE_ALERT
+  TRAINING_RECOMMENDATION
+  WORKLOAD_BALANCE
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SkillCategory {
+  TECHNICAL
+  SOFT_SKILL
+  CERTIFICATION
+  LANGUAGE
+  TOOL
+  DOMAIN_KNOWLEDGE
+}
+
+enum ProficiencyLevel {
+  BEGINNER      // 1
+  INTERMEDIATE  // 2
+  ADVANCED      // 3
+  EXPERT        // 4
+  MASTER        // 5
+}
+
+enum GoalType {
+  OKR
+  SMART
+  PROJECT
+  PERSONAL
+}
+
+enum GoalStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  ABANDONED
+  OVERDUE
+}
+
+enum ReviewStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 // User authentication and authorization
 model User {
   id                String    @id @default(cuid())
@@ -296,4 +350,448 @@ model ActivityLog {
   @@index([action])
   @@index([entity])
   @@index([createdAt])
+}
+
+// AI-Powered Insights
+model AIInsight {
+  id                String       @id @default(cuid())
+  type              InsightType
+  employeeId        String?
+  riskLevel         RiskLevel?
+  score             Float?       // 0-100 for risk scores
+  title             String
+  description       String
+  recommendation    String?
+  metadata          Json?        // Additional context data
+  confidence        Float        // 0-1 confidence score
+  isActive          Boolean      @default(true)
+  acknowledgedBy    String?
+  acknowledgedAt    DateTime?
+  createdAt         DateTime     @default(now())
+  expiresAt         DateTime?    // Insights can expire
+
+  @@index([type])
+  @@index([employeeId])
+  @@index([riskLevel])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+// Skills Catalog
+model Skill {
+  id                String          @id @default(cuid())
+  name              String          @unique
+  category          SkillCategory
+  description       String?
+  department        String?         // Relevant department (optional)
+  isActive          Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  // Relations
+  employeeSkills    EmployeeSkill[]
+
+  @@index([category])
+  @@index([department])
+  @@index([isActive])
+}
+
+// Employee Skills (proficiency tracking)
+model EmployeeSkill {
+  id                String            @id @default(cuid())
+  employeeId        String
+  skillId           String
+  level             Int               // 1-5 (Beginner to Master)
+  verified          Boolean           @default(false)   // Manager verified
+  verifiedBy        String?           // Manager who verified
+  verifiedAt        DateTime?
+  targetLevel       Int?              // Goal proficiency level
+  lastAssessed      DateTime          @default(now())
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  skill             Skill             @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, skillId])
+  @@index([employeeId])
+  @@index([skillId])
+  @@index([level])
+  @@index([verified])
+}
+
+// Skill Gap Analysis
+model SkillGap {
+  id                String    @id @default(cuid())
+  employeeId        String
+  roleTitle         String    // Target role
+  missingSkills     Json      // [{skillId, skillName, requiredLevel, currentLevel}]
+  trainingPlan      Json?     // Recommended courses/actions
+  priority          String    // HIGH, MEDIUM, LOW
+  status            String    // IDENTIFIED, IN_PROGRESS, CLOSED
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([priority])
+}
+
+// Performance Goals (OKRs)
+model PerformanceGoal {
+  id                String      @id @default(cuid())
+  employeeId        String
+  type              GoalType    @default(OKR)
+  status            GoalStatus  @default(DRAFT)
+  quarter           String      // e.g., "2026-Q1"
+  objective         String      // The "what" - qualitative goal
+  keyResults        Json        // [{description, target, current, unit}]
+  progress          Int         @default(0) // 0-100
+  startDate         DateTime
+  endDate           DateTime
+  createdBy         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([quarter])
+  @@index([endDate])
+}
+
+// 360 Feedback Requests
+model FeedbackRequest {
+  id                String        @id @default(cuid())
+  subjectId         String        // Employee being reviewed
+  requestorId       String        // Who initiated (HR/self)
+  reviewers         Json          // [employeeIds]
+  questions         Json          // [{question, type}]
+  anonymousMode     Boolean       @default(true)
+  status            ReviewStatus  @default(PENDING)
+  dueDate           DateTime
+  completedAt       DateTime?
+  createdAt         DateTime      @default(now())
+
+  // Relations
+  responses         FeedbackResponse[]
+
+  @@index([subjectId])
+  @@index([status])
+  @@index([dueDate])
+}
+
+// 360 Feedback Responses
+model FeedbackResponse {
+  id                String           @id @default(cuid())
+  requestId         String
+  reviewerId        String           // Who gave feedback
+  answers           Json             // [{question, answer, rating}]
+  submittedAt       DateTime         @default(now())
+
+  // Relations
+  request           FeedbackRequest  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+
+  @@unique([requestId, reviewerId])
+  @@index([requestId])
+  @@index([reviewerId])
+}
+
+// Performance Reviews
+model PerformanceReview {
+  id                String      @id @default(cuid())
+  employeeId        String
+  reviewerId        String      // Manager conducting review
+  period            String      // e.g., "2026-Q1"
+  ratings           Json        // {competency: score}
+  strengths         String?
+  areasForImprovement String?
+  overallRating     Int?        // 1-5
+  comments          String?
+  status            ReviewStatus @default(IN_PROGRESS)
+  scheduledDate     DateTime?
+  completedAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([employeeId])
+  @@index([reviewerId])
+  @@index([period])
+  @@index([status])
+}
+
+// === Feature 4: Employee Onboarding ===
+
+// Onboarding Templates
+model OnboardingTemplate {
+  id                String    @id @default(cuid())
+  department        String
+  role              String
+  tasks             Json      // [{title, assignee, dueDay, category, description}]
+  documents         Json      // Required documents
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([department])
+  @@index([role])
+}
+
+// Onboarding Journeys
+model OnboardingJourney {
+  id                String    @id @default(cuid())
+  employeeId        String
+  templateId        String?
+  startDate         DateTime
+  tasks             Json      // [{...task, completed, completedAt, completedBy}]
+  progress          Int       @default(0) // 0-100
+  status            String    // ACTIVE, COMPLETED, CANCELLED
+  completedAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+}
+
+// === Feature 5: Shift Scheduling ===
+
+// Shift Templates
+model ShiftTemplate {
+  id                String    @id @default(cuid())
+  name              String
+  startTime         String    // "09:00"
+  endTime           String    // "17:00"
+  department        String?
+  requiredStaff     Int       @default(1)
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+
+  @@index([department])
+}
+
+// Shifts
+model Shift {
+  id                String    @id @default(cuid())
+  templateId        String?
+  date              DateTime
+  startTime         String
+  endTime           String
+  employeeId        String?
+  department        String?
+  status            String    @default("OPEN") // OPEN, ASSIGNED, COMPLETED, CANCELLED
+  notes             String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([date])
+  @@index([employeeId])
+  @@index([status])
+}
+
+// Shift Swap Requests
+model ShiftSwapRequest {
+  id                String    @id @default(cuid())
+  originalShiftId   String
+  requestorId       String
+  targetEmployeeId  String?
+  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  reason            String?
+  reviewedBy        String?
+  reviewedAt        DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([requestorId])
+  @@index([status])
+}
+
+// === Feature 6: Expense Management ===
+
+// Expense Claims
+model ExpenseClaim {
+  id                String    @id @default(cuid())
+  employeeId        String
+  category          String    // TRAVEL, MEALS, OFFICE_SUPPLIES, etc.
+  amount            Float
+  description       String
+  receiptUrl        String?
+  date              DateTime
+  status            String    @default("PENDING") // PENDING, APPROVED, REJECTED, PAID
+  approvedBy        String?
+  approvedAt        DateTime?
+  rejectionReason   String?
+  paidAt            DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([date])
+}
+
+// === Feature 7: Learning & Development ===
+
+// Courses
+model Course {
+  id                String    @id @default(cuid())
+  title             String
+  description       String?
+  type              String    // COMPLIANCE, TECHNICAL, SOFT_SKILL, CERTIFICATION
+  duration          Int       // minutes
+  mandatory         Boolean   @default(false)
+  department        String?
+  externalUrl       String?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([type])
+  @@index([mandatory])
+}
+
+// Employee Course Enrollment
+model EmployeeCourse {
+  id                String    @id @default(cuid())
+  employeeId        String
+  courseId          String
+  status            String    @default("ASSIGNED") // ASSIGNED, IN_PROGRESS, COMPLETED
+  progress          Int       @default(0) // 0-100
+  assignedBy        String?
+  assignedAt        DateTime  @default(now())
+  startedAt         DateTime?
+  completedAt       DateTime?
+  certificateUrl    String?
+
+  @@unique([employeeId, courseId])
+  @@index([employeeId])
+  @@index([courseId])
+  @@index([status])
+}
+
+// Certifications
+model Certification {
+  id                String    @id @default(cuid())
+  employeeId        String
+  name              String
+  issuedBy          String
+  issuedDate        DateTime
+  expiryDate        DateTime?
+  fileUrl           String?
+  verificationUrl   String?
+  createdAt         DateTime  @default(now())
+
+  @@index([employeeId])
+  @@index([expiryDate])
+}
+
+// === Feature 8: Recruitment (ATS Lite) ===
+
+// Job Postings
+model JobPosting {
+  id                String    @id @default(cuid())
+  title             String
+  department        String
+  description       String
+  requirements      Json      // Skills, experience, education
+  salaryRange       String?
+  openings          Int       @default(1)
+  status            String    @default("OPEN") // OPEN, CLOSED
+  postedBy          String
+  postedAt          DateTime  @default(now())
+  closedAt          DateTime?
+
+  @@index([status])
+  @@index([department])
+}
+
+// Candidates
+model Candidate {
+  id                String    @id @default(cuid())
+  jobId             String
+  name              String
+  email             String
+  phone             String?
+  resumeUrl         String?
+  stage             String    @default("APPLIED") // APPLIED, SCREENING, INTERVIEW, OFFER, HIRED, REJECTED
+  rating            Int?      // 1-5
+  notes             String?
+  appliedAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([jobId])
+  @@index([stage])
+  @@index([email])
+}
+
+// === Feature 9: Employee Well-Being ===
+
+// Wellness Programs
+model WellnessProgram {
+  id                String    @id @default(cuid())
+  name              String
+  type              String    // FITNESS, MENTAL_HEALTH, FINANCIAL, SOCIAL
+  description       String?
+  startDate         DateTime
+  endDate           DateTime?
+  participants      Json?     // [employeeIds]
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+
+  @@index([type])
+  @@index([isActive])
+}
+
+// Wellness Activities
+model WellnessActivity {
+  id                String    @id @default(cuid())
+  employeeId        String
+  programId         String?
+  activityDate      DateTime
+  activityType      String    // STEPS, MEDITATION, WORKOUT, etc.
+  points            Int       @default(0)
+  notes             String?
+  createdAt         DateTime  @default(now())
+
+  @@index([employeeId])
+  @@index([programId])
+  @@index([activityDate])
+}
+
+// === Feature 10: Time Tracking ===
+
+// Projects
+model Project {
+  id                String    @id @default(cuid())
+  name              String
+  code              String    @unique
+  department        String?
+  description       String?
+  isActive          Boolean   @default(true)
+  startDate         DateTime?
+  endDate           DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([code])
+  @@index([isActive])
+}
+
+// Time Entries
+model TimeEntry {
+  id                String    @id @default(cuid())
+  employeeId        String
+  projectId         String?
+  taskDescription   String?
+  date              DateTime
+  hours             Float
+  billable          Boolean   @default(true)
+  approved          Boolean   @default(false)
+  approvedBy        String?
+  approvedAt        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([employeeId])
+  @@index([projectId])
+  @@index([date])
+  @@index([approved])
 }

@@ -12,6 +12,7 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  Brain,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
@@ -52,6 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onExpandChange }) => {
     { to: '/admin/leave', label: 'Leave', icon: CalendarDays },
     { to: '/admin/payroll', label: 'Payroll', icon: DollarSign },
     { to: '/admin/performance', label: 'Performance', icon: Award },
+    { to: '/admin/ai-insights', label: 'AI Insights', icon: Brain },
     { to: '/admin/analytics', label: 'Reports', icon: BarChart3 },
     { to: '/admin/notifications', label: 'Alerts', icon: Bell },
     { to: '/admin/settings', label: 'Settings', icon: Settings },

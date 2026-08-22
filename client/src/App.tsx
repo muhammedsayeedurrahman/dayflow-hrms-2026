@@ -31,6 +31,7 @@ const AnalyticsAdmin = lazy(() => import('./pages/admin/AnalyticsAdmin'));
 const NotificationsAdmin = lazy(() => import('./pages/admin/NotificationsAdmin'));
 const PerformanceAdmin = lazy(() => import('./pages/admin/PerformanceAdmin'));
 const SettingsAdmin = lazy(() => import('./pages/admin/SettingsAdmin'));
+const AIInsightsAdmin = lazy(() => import('./pages/admin/AIInsightsAdmin'));
 
 function App() {
   const { user, isAuthenticated } = useAuthStore();
@@ -80,6 +81,7 @@ function App() {
           <Route path="/admin/notifications" element={<NotificationsAdmin />} />
           <Route path="/admin/performance" element={<PerformanceAdmin />} />
           <Route path="/admin/settings" element={<SettingsAdmin />} />
+          <Route path="/admin/ai-insights" element={<AIInsightsAdmin />} />
         </Route>
 
         {/* Default Catch-All Route */}

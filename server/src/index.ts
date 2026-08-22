@@ -14,6 +14,8 @@ import leaveRoutes from './routes/leave';
 import payrollRoutes from './routes/payroll';
 import notificationRoutes from './routes/notifications';
 import documentRoutes from './routes/documents';
+import aiInsightsRoutes from './routes/aiInsights';
+import skillsRoutes from './routes/skills';
 
 dotenv.config();
 
@@ -63,6 +65,8 @@ app.use('/api/leave', leaveRoutes);
 app.use('/api/payroll', payrollRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/ai/insights', aiInsightsRoutes);
+app.use('/api/skills', skillsRoutes);
 
 // 404 handler for unmatched API routes
 app.use('/api/*', (req, res) => {
