@@ -112,3 +112,14 @@ export const documentAPI = {
     api.get(`/documents/${id}/download`, { responseType: 'blob' }),
   delete: (id: string) => api.delete(`/documents/${id}`),
 };
+
+// AI Insights API
+export const aiInsightsAPI = {
+  generateInsights: () => api.post('/ai/insights/generate'),
+  getAllInsights: (type?: string, riskLevel?: string, isActive?: boolean) =>
+    api.get('/ai/insights', { params: { type, riskLevel, isActive } }),
+  getEmployeeInsights: (employeeId: string) =>
+    api.get(`/ai/insights/employee/${employeeId}`),
+  acknowledgeInsight: (id: string) => api.put(`/ai/insights/${id}/acknowledge`),
+  getAttritionStats: () => api.get('/ai/insights/attrition/stats'),
+};

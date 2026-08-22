@@ -54,6 +54,21 @@ enum DocumentType {
   OTHER
 }
 
+enum InsightType {
+  ATTRITION_RISK
+  LEAVE_SUGGESTION
+  PERFORMANCE_ALERT
+  TRAINING_RECOMMENDATION
+  WORKLOAD_BALANCE
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
 // User authentication and authorization
 model User {
   id                String    @id @default(cuid())
@@ -295,5 +310,30 @@ model ActivityLog {
   @@index([userId])
   @@index([action])
   @@index([entity])
+  @@index([createdAt])
+}
+
+// AI-Powered Insights
+model AIInsight {
+  id                String       @id @default(cuid())
+  type              InsightType
+  employeeId        String?
+  riskLevel         RiskLevel?
+  score             Float?       // 0-100 for risk scores
+  title             String
+  description       String
+  recommendation    String?
+  metadata          Json?        // Additional context data
+  confidence        Float        // 0-1 confidence score
+  isActive          Boolean      @default(true)
+  acknowledgedBy    String?
+  acknowledgedAt    DateTime?
+  createdAt         DateTime     @default(now())
+  expiresAt         DateTime?    // Insights can expire
+
+  @@index([type])
+  @@index([employeeId])
+  @@index([riskLevel])
+  @@index([isActive])
   @@index([createdAt])
 }
