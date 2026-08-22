@@ -1,5 +1,12 @@
 # Dayflow HRMS — Development Progress Log
 
+## Backend Enhancement Audit - 2026-08-22
+- Synced the shared branch and audited routes, Prisma schema, frontend API service, RBAC, validation, and notification ownership.
+- Corrected analytics date validation and inclusive UTC date boundaries; aligned payroll analytics aliases with the frontend contract.
+- Hardened public signup so it cannot provision privileged roles; removed stack traces from API responses.
+- Made leave request/review plus notification creation transactional.
+- Replaced the mutating API script with a read-mostly smoke suite and added API/audit documentation.
+
 **Event**: Odoo x NMIT Bangalore Hackathon 2026
 **Team**: Backend Lead + Frontend Lead (Parallel Development)
 **Duration**: ~5 hours

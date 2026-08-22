@@ -43,3 +43,16 @@ Demo accounts (password `Password123` for all): `hr@dayflow.com`,
 `john@dayflow.com`, `priya@dayflow.com`, `amit@dayflow.com`, `sara@dayflow.com`,
 `rahul@dayflow.com`. Full setup notes and requirement traceability for this branch live in
 its own `README.md` and `docs/` — they only apply on `dev/build`, not here.
+
+## Progress log (updated roughly hourly)
+
+- **Hour 01** — Backend complete: auth, RBAC, attendance, leave, payroll, notifications,
+  analytics. Every route smoke-tested live over HTTP.
+- **Hour 02** — Frontend complete: both dashboards, profile, attendance, leave, payroll,
+  notifications, analytics/insights UI. `tsc -b` + production `vite build` both clean.
+- **Hour 03** — Independent code-review pass found a repeated bug pattern: several pages'
+  data-load functions had no `try/catch`, so a failed API call left the page spinner-locked
+  forever instead of showing an error; a few save modals failed the same way (silent no-op
+  instead of an error toast). Added a shared `useLoader` hook (loading always resolves via
+  `finally`, failures surface as a toast) and applied it across every affected page. Rebuilt
+  clean.
