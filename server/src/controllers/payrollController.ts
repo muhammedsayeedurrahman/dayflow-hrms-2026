@@ -206,6 +206,11 @@ export const getPayrollStats = async (
     res.json({
       success: true,
       data: {
+        totalGross: totalGrossSalary,
+        totalNet: totalNetSalary,
+        averageGross: payrolls.length > 0 ? Math.round(totalGrossSalary / payrolls.length) : 0,
+        averageNet: payrolls.length > 0 ? Math.round(totalNetSalary / payrolls.length) : 0,
+        // Retained aliases preserve the response shape used by the current UI.
         totalGrossSalary,
         totalNetSalary,
         totalBasicSalary,

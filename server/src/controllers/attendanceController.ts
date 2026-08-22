@@ -3,6 +3,7 @@ import { z } from 'zod';
 import prisma from '../utils/prisma';
 import { HttpError } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
+import { getInclusiveDateRange } from '../utils/dateRange';
 
 // Check in
 export const checkIn = async (
@@ -147,13 +148,9 @@ export const getMyAttendance = async (
       throw new HttpError(404, 'Employee not found');
     }
 
+    const { start, end } = getInclusiveDateRange(startDate, endDate);
     const where: any = { employeeId: employee.id };
-
-    if (startDate || endDate) {
-      where.date = {};
-      if (startDate) where.date.gte = new Date(startDate as string);
-      if (endDate) where.date.lte = new Date(endDate as string);
-    }
+    if (start || end) where.date = { ...(start && { gte: start }), ...(end && { lte: end }) };
 
     const attendance = await prisma.attendance.findMany({
       where,
@@ -179,17 +176,14 @@ export const getAllAttendance = async (
   try {
     const { employeeId, startDate, endDate } = req.query;
 
+    const { start, end } = getInclusiveDateRange(startDate, endDate);
     const where: any = {};
 
     if (employeeId) {
       where.employeeId = employeeId as string;
     }
 
-    if (startDate || endDate) {
-      where.date = {};
-      if (startDate) where.date.gte = new Date(startDate as string);
-      if (endDate) where.date.lte = new Date(endDate as string);
-    }
+    if (start || end) where.date = { ...(start && { gte: start }), ...(end && { lte: end }) };
 
     const attendance = await prisma.attendance.findMany({
       where,
@@ -265,11 +259,8 @@ export const getAttendanceStats = async (
   try {
     const { startDate, endDate } = req.query;
 
-    // Default to last 30 days if no date range provided
-    const start = startDate
-      ? new Date(startDate as string)
-      : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const end = endDate ? new Date(endDate as string) : new Date();
+    // Date-only filters are interpreted as inclusive UTC calendar days.
+    const { start, end } = getInclusiveDateRange(startDate, endDate, 30);
 
     // Get attendance records for date range
     const attendanceRecords = await prisma.attendance.findMany({
