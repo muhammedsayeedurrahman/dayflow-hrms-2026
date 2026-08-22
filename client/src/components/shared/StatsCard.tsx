@@ -45,31 +45,19 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   const styles = variantStyles[variant];
 
   return (
-    <div
-      className="bg-white rounded-lg p-6 transition-all duration-200 cursor-pointer hover:-translate-y-0.5"
-      style={{
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-        fontFamily: '"Fira Sans", sans-serif',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 10px 15px rgba(0,0,0,0.1)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
-      }}
-    >
+    <div className="bg-white rounded-2xl p-5 border border-slate-200/60 interactive-card cursor-pointer">
       <div className="flex justify-between items-start">
         <div className="flex-1">
-          <p className="text-sm text-gray-500 font-medium">{label}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</p>
+          <p className="text-3xl font-extrabold text-slate-900 mt-1">{value}</p>
           {trend && (
-            <p className={`text-xs font-semibold mt-2 ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+            <p className={`text-[10px] font-bold mt-2.5 ${trend.isPositive ? 'text-green-600' : 'text-red-600'}`}>
               {trend.value}
             </p>
           )}
         </div>
         <div
-          className="p-2.5 rounded-lg"
+          className="p-2.5 rounded-xl"
           style={{ backgroundColor: styles.iconBg }}
         >
           <Icon className="w-5 h-5" style={{ color: styles.iconColor }} />

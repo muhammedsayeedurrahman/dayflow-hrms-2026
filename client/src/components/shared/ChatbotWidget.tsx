@@ -137,7 +137,6 @@ export const ChatbotWidget: React.FC = () => {
           style={{
             backgroundColor: '#1E40AF', // blue-800
             color: 'white',
-            fontFamily: '"Fira Sans", sans-serif',
           }}
           aria-label="Open chatbot"
         >
@@ -153,7 +152,6 @@ export const ChatbotWidget: React.FC = () => {
             width: '400px',
             height: '600px',
             backgroundColor: 'white',
-            fontFamily: '"Fira Sans", sans-serif',
             backdropFilter: 'blur(10px)',
           }}
         >

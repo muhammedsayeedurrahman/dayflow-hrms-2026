@@ -1,5 +1,5 @@
-/* Design System Fonts: Fira Code + Fira Sans */
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+/* Design System Fonts: Inter (Professional standard for premium SaaS) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @import "tailwindcss";
 
@@ -81,20 +81,23 @@
 html, body {
   background-color: var(--bg-primary) !important;
   color: var(--text-primary) !important;
-  font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   overflow-x: hidden;
   scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Typography hierarchy: Fira Code for headings, Fira Sans for body */
+/* Typography hierarchy: Clean sans-serif headings and body */
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Fira Code', monospace;
-  font-weight: 600;
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
-/* Ensure body text uses Fira Sans */
 p, span, div, button, input, textarea, select {
-  font-family: 'Fira Sans', sans-serif;
+  font-family: 'Inter', -apple-system, sans-serif;
+  letter-spacing: -0.01em;
 }
 
 /* Premium Scrollbars */
@@ -113,17 +116,22 @@ p, span, div, button, input, textarea, select {
   background: var(--text-secondary);
 }
 
-/* White/Light Surfaces */
+/* Stable Card Surfaces (No layout shifts or bounciness on hover) */
 .bg-white {
   background-color: var(--bg-card) !important;
   border-color: var(--border-card) !important;
-  box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.04), 0 2px 6px -2px rgba(15, 23, 42, 0.02) !important;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.03), 0 1px 2px -1px rgba(15, 23, 42, 0.02) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.bg-white:hover {
+/* Distinct interactive cards hover styles */
+.interactive-card {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.interactive-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 4px 12px -3px rgba(15, 23, 42, 0.03) !important;
+  box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 14px -3px rgba(15, 23, 42, 0.03) !important;
+  border-color: rgba(37, 99, 235, 0.2) !important;
 }
 
 .bg-slate-50 {
@@ -134,11 +142,11 @@ p, span, div, button, input, textarea, select {
 .glass-sidebar {
   background-color: var(--bg-card) !important;
   border-right: 1px solid var(--border-card) !important;
-  box-shadow: 4px 0 24px -5px rgba(15, 23, 42, 0.04) !important;
+  box-shadow: 4px 0 24px -5px rgba(15, 23, 42, 0.02) !important;
 }
 
 /* Input Fields overrides */
-.bg-slate-50\/80, .bg-slate-50, .bg-slate-950\/80, .bg-slate-950, .bg-slate-950\/80 {
+.bg-slate-50\/80, .bg-slate-50, .bg-slate-950\/80, .bg-slate-950 {
   background-color: #F8FAFC !important;
   border-color: var(--border-card) !important;
   color: var(--text-primary) !important;
@@ -184,7 +192,26 @@ p, span, div, button, input, textarea, select {
 .floating-nav {
   background-color: var(--bg-card) !important;
   border: 1px solid var(--border-card) !important;
-  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.06) !important;
+  box-shadow: 0 4px 20px -3px rgba(15, 23, 42, 0.04) !important;
+}
+
+/* Liquid Background Blobs */
+.liquid-bg-blob, .liquid-bg-blob-2 {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 9999px;
+  filter: blur(140px);
+  opacity: 0.1;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+.liquid-bg-blob {
+  background: radial-gradient(circle, var(--primary-blue), transparent 60%);
+}
+.liquid-bg-blob-2 {
+  background: radial-gradient(circle, var(--purple-accent), transparent 60%);
 }
 
 /* Recharts grid override styling */
@@ -197,7 +224,7 @@ p, span, div, button, input, textarea, select {
 /* Absence Timeline Calendar stripes */
 .weekend-stripe {
   background-color: #F8FAFC !important;
-  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(226, 232, 240, 0.3) 5px, rgba(226, 232, 240, 0.3) 10px) !important;
+  background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(226, 232, 240, 0.25) 5px, rgba(226, 232, 240, 0.25) 10px) !important;
 }
 
 /* Toast animations */
