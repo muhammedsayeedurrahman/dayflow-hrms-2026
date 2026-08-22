@@ -1,5 +1,21 @@
 # Dayflow HRMS — Requirements Traceability Matrix
 
+> Backend traceability update (2026-08-22): “Build validated” means TypeScript and Prisma validation passed; runtime smoke tests require a running seeded local server.
+
+| Requirement | Backend module | Endpoint(s) | Status | Tested |
+| --- | --- | --- | --- | --- |
+| Sign in and JWT authorization | Auth | `POST /auth/signin`, `GET /auth/verify` | Implemented | Build validated; smoke scripted |
+| Employee profile | Employee | `GET/PUT /employees/profile` | Implemented | Build validated; smoke scripted |
+| HR employee management | Employee | `GET /employees`, `GET/PUT /employees/:id` | Implemented | Build validated; smoke scripted |
+| Attendance and history | Attendance | `check-in`, `check-out`, `today`, `me` | Implemented | Build validated; smoke scripted |
+| Leave application and review | Leave | `apply`, `me`, `/:id/status` | Implemented | Build validated; smoke scripted |
+| Payroll access and management | Payroll | `me`, `/`, `/:employeeId` | Implemented | Build validated; smoke scripted |
+| Notifications | Notifications | `me`, `/:id/read`, `read-all` | Implemented | Build validated; smoke scripted |
+| Attendance analytics | Attendance | `GET /attendance/stats` | Implemented | Build validated; smoke scripted |
+| Leave analytics | Leave | `GET /leave/stats` | Implemented | Build validated; smoke scripted |
+| Employee analytics | Employee | `GET /employees/stats` | Implemented | Build validated; smoke scripted |
+| Payroll analytics | Payroll | `GET /payroll/stats` | Implemented | Build validated; smoke scripted |
+
 Source of Truth: **Dayflow - Human Resource Management System PDF**
 Stack: **React + TypeScript + Vite + Tailwind CSS + Lucide Icons + Recharts + Zustand**
 

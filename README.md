@@ -1,5 +1,9 @@
 # Dayflow HRMS
 
+## Backend verification update
+
+The Express/Prisma backend exposes role-protected analytics at `/api/attendance/stats`, `/api/leave/stats`, `/api/employees/stats`, and `/api/payroll/stats`. See [the API reference](docs/API.md) for the complete route contract, UTC attendance date-filter behavior, and safe local smoke-test command.
+
 **Every workday, perfectly aligned.**
 
 A complete, production-grade Human Resource Management System with **polished interactive UI** and **real backend API** built for the **Odoo x NMIT Bangalore Hackathon 2026**.

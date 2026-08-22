@@ -33,6 +33,10 @@ export const applyLeave = async (
     const startDate = new Date(validatedData.startDate);
     const endDate = new Date(validatedData.endDate);
 
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      throw new HttpError(400, 'Invalid date range');
+    }
+
     // Calculate total days
     const totalDays =
       Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -41,38 +45,43 @@ export const applyLeave = async (
       throw new HttpError(400, 'Invalid date range');
     }
 
-    const leaveRequest = await prisma.leaveRequest.create({
-      data: {
-        employeeId: employee.id,
-        leaveType: validatedData.leaveType,
-        startDate,
-        endDate,
-        totalDays,
-        reason: validatedData.reason,
-        remarks: validatedData.remarks,
-        status: 'PENDING',
-      },
-    });
-
-    // Create notification for HR
     const hrUsers = await prisma.user.findMany({
       where: { role: { in: ['HR', 'ADMIN'] } },
+      select: { id: true },
     });
 
-    for (const hrUser of hrUsers) {
-      await prisma.notification.create({
+    // The request and every recipient notification are one business action.
+    const leaveRequest = await prisma.$transaction(async (tx) => {
+      const created = await tx.leaveRequest.create({
         data: {
-          userId: hrUser.id,
-          type: 'LEAVE_SUBMITTED',
-          title: 'New Leave Request',
-          message: `${employee.fullName} has submitted a ${validatedData.leaveType.toLowerCase()} leave request for ${totalDays} day(s)`,
-          metadata: {
-            leaveRequestId: leaveRequest.id,
-            employeeId: employee.id,
-          },
+          employeeId: employee.id,
+          leaveType: validatedData.leaveType,
+          startDate,
+          endDate,
+          totalDays,
+          reason: validatedData.reason,
+          remarks: validatedData.remarks,
+          status: 'PENDING',
         },
       });
-    }
+
+      if (hrUsers.length > 0) {
+        await tx.notification.createMany({
+          data: hrUsers.map((hrUser) => ({
+            userId: hrUser.id,
+            type: 'LEAVE_SUBMITTED',
+            title: 'New Leave Request',
+            message: `${employee.fullName} has submitted a ${validatedData.leaveType.toLowerCase()} leave request for ${totalDays} day(s)`,
+            metadata: {
+              leaveRequestId: created.id,
+              employeeId: employee.id,
+            },
+          })),
+        });
+      }
+
+      return created;
+    });
 
     res.status(201).json({
       success: true,
@@ -199,33 +208,34 @@ export const updateLeaveStatus = async (
       throw new HttpError(400, 'Leave request has already been processed');
     }
 
-    const updated = await prisma.leaveRequest.update({
-      where: { id },
-      data: {
-        status: validatedData.status,
-        reviewedBy: userId,
-        reviewedAt: new Date(),
-        reviewComments: validatedData.comments,
-      },
-    });
-
-    // Notify employee (use leaveRequest which has the include)
-    if (leaveRequest.employee?.user) {
-      await prisma.notification.create({
+    const updated = await prisma.$transaction(async (tx) => {
+      const processed = await tx.leaveRequest.update({
+        where: { id },
         data: {
-          userId: leaveRequest.employee.user.id,
-          type:
-            validatedData.status === 'APPROVED'
-              ? 'LEAVE_APPROVED'
-              : 'LEAVE_REJECTED',
-          title: `Leave ${validatedData.status.toLowerCase()}`,
-          message: `Your ${leaveRequest.leaveType.toLowerCase()} leave request has been ${validatedData.status.toLowerCase()}${validatedData.comments ? `: ${validatedData.comments}` : ''}`,
-          metadata: {
-            leaveRequestId: leaveRequest.id,
-          },
+          status: validatedData.status,
+          reviewedBy: userId,
+          reviewedAt: new Date(),
+          reviewComments: validatedData.comments,
         },
       });
-    }
+
+      if (leaveRequest.employee.user) {
+        await tx.notification.create({
+          data: {
+            userId: leaveRequest.employee.user.id,
+            type:
+              validatedData.status === 'APPROVED'
+                ? 'LEAVE_APPROVED'
+                : 'LEAVE_REJECTED',
+            title: `Leave ${validatedData.status.toLowerCase()}`,
+            message: `Your ${leaveRequest.leaveType.toLowerCase()} leave request has been ${validatedData.status.toLowerCase()}${validatedData.comments ? `: ${validatedData.comments}` : ''}`,
+            metadata: { leaveRequestId: leaveRequest.id },
+          },
+        });
+      }
+
+      return processed;
+    });
 
     res.json({
       success: true,
