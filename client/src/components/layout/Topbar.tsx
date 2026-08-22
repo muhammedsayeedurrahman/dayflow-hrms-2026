@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Bell, User, LogOut, CheckCircle2, ShieldCheck, Sparkles, Menu } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
@@ -16,6 +16,24 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu }) => {
   const [showNotifMenu, setShowNotifMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [currentTime, setCurrentTime] = useState('');
+
+  // Refs for outside-click detection
+  const notifRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdowns on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setShowNotifMenu(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
 
   useEffect(() => {
     const updateTime = () => {
@@ -40,8 +58,8 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu }) => {
   const todayRecord = attendance.find((a) => a.employeeId === user?.employeeId && a.date === today);
   const isCheckedIn = !!todayRecord?.checkIn && !todayRecord?.checkOut;
 
-  // Title calculation from pathname
-  const getPageTitle = () => {
+  // Memoized page title to avoid recalculating on every render
+  const pageTitle = useMemo(() => {
     const path = location.pathname;
     if (path.includes('/employee/dashboard')) return 'Employee Dashboard';
     if (path.includes('/employee/attendance')) return 'Attendance & Time Tracker';
@@ -59,7 +77,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu }) => {
     if (path.includes('/admin/notifications')) return 'HR Global Notifications';
 
     return 'Dayflow HRMS';
-  };
+  }, [location.pathname]);
 
   return (
     <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200/80 bg-white/90 px-4 md:px-8 backdrop-blur-md">
@@ -73,7 +91,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu }) => {
           <Menu className="h-5 w-5" />
         </button>
         <div>
-          <h1 className="text-lg font-bold text-slate-900 tracking-tight">{getPageTitle()}</h1>
+          <h1 className="text-lg font-bold text-slate-900 tracking-tight">{pageTitle}</h1>
           <span className="text-xs text-slate-500 font-medium">{currentTime}</span>
         </div>
       </div>
@@ -127,7 +145,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu }) => {
         )}
 
         {/* Notification Bell Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={notifRef}>
           <button
             onClick={() => {
               setShowNotifMenu(!showNotifMenu);
@@ -183,7 +201,7 @@ export const Topbar: React.FC<TopbarProps> = ({ onOpenMobileMenu }) => {
         </div>
 
         {/* User Profile Avatar Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button
             onClick={() => {
               setShowProfileMenu(!showProfileMenu);
