@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { MobileNav } from './MobileNav';
@@ -7,6 +8,14 @@ import { MobileNav } from './MobileNav';
 export const AppLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  const location = useLocation();
+
+  // Render topbar header only on dashboard pages
+  const isDashboardPage =
+    location.pathname === '/admin/dashboard' ||
+    location.pathname === '/employee/dashboard' ||
+    location.pathname === '/admin' ||
+    location.pathname === '/employee';
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex relative overflow-hidden">
@@ -28,7 +37,19 @@ export const AppLayout: React.FC = () => {
           ${sidebarExpanded ? 'md:pl-64' : 'md:pl-28'}
         `}
       >
-        <Topbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
+        {isDashboardPage ? (
+          <Topbar onOpenMobileMenu={() => setMobileMenuOpen(true)} />
+        ) : (
+          <div className="md:hidden p-4 pb-0">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="p-2 text-slate-600 hover:bg-slate-200/60 rounded-xl"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+        )}
         <main className="flex-1 p-4 md:p-8 max-w-7xl w-full mx-auto space-y-8 animate-in fade-in duration-300">
           <Outlet />
         </main>
@@ -36,3 +57,5 @@ export const AppLayout: React.FC = () => {
     </div>
   );
 };
+
+export default AppLayout;
